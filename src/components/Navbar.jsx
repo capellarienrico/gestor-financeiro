@@ -6,7 +6,8 @@ import {
   Sparkles,
   FileSpreadsheet,
   CalendarCheck,
-  Settings
+  Settings,
+  Cloud
 } from 'lucide-react'
 
 export function Navbar({
@@ -14,7 +15,10 @@ export function Navbar({
   onUpdateBalance,
   activeTab,
   setActiveTab,
-  onOpenNubankModal
+  onOpenNubankModal,
+  googleUser,
+  isSyncing,
+  onOpenDriveModal
 }) {
   const tabs = [
     { id: 'spreadsheet', label: 'Planilha Mensal', icon: FileSpreadsheet, badge: 'Principal' },
@@ -57,12 +61,40 @@ export function Navbar({
 
           {/* Quick Actions */}
           <div className="flex items-center space-x-2">
+            {/* Google Drive Status Button */}
+            <button
+              onClick={onOpenDriveModal}
+              className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg font-medium text-xs sm:text-sm transition cursor-pointer border ${
+                googleUser
+                  ? 'bg-slate-800/90 hover:bg-slate-700/90 border-slate-700 text-slate-200'
+                  : 'bg-blue-600/20 hover:bg-blue-600/30 border-blue-500/30 text-blue-300'
+              }`}
+              title="Gerenciar sincronização com Google Drive"
+            >
+              {googleUser ? (
+                <>
+                  {googleUser.picture ? (
+                    <img src={googleUser.picture} alt="" className="w-4 h-4 rounded-full" />
+                  ) : (
+                    <Cloud className="w-4 h-4 text-emerald-400" />
+                  )}
+                  <span className="hidden sm:inline font-medium">{googleUser.name ? googleUser.name.split(' ')[0] : 'Nuvem'}</span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title="Sincronizado na nuvem"></span>
+                </>
+              ) : (
+                <>
+                  <Cloud className="w-4 h-4 text-blue-400" />
+                  <span>Conectar Drive</span>
+                </>
+              )}
+            </button>
+
             <button
               onClick={onOpenNubankModal}
               className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-medium text-xs sm:text-sm transition shadow-lg shadow-purple-600/20 cursor-pointer"
             >
               <UploadCloud className="w-4 h-4" />
-              <span>Importar Nubank (CSV/OFX)</span>
+              <span>Importar Nubank</span>
             </button>
           </div>
         </div>

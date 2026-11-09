@@ -10,9 +10,13 @@ import {
   Download,
   UploadCloud,
   Palette,
-  ShieldCheck
+  ShieldCheck,
+  Cloud,
+  RefreshCw,
+  ExternalLink
 } from 'lucide-react'
 import { importBackup } from '../utils/storage'
+import { DRIVE_FILENAME } from '../utils/googleDriveService'
 
 export function SettingsTab({
   categories,
@@ -25,7 +29,10 @@ export function SettingsTab({
   onUpdateDailyGoal,
   onExportBackup,
   onRestoreBackup,
-  onResetData
+  onResetData,
+  googleUser,
+  lastSyncTime,
+  onOpenDriveModal
 }) {
   // New category state
   const [activeSubTab, setActiveSubTab] = useState('expenses') // 'expenses' | 'incomes' | 'general'
@@ -301,6 +308,44 @@ export function SettingsTab({
       {/* SubTab: Backup & Sistema */}
       {activeSubTab === 'general' && (
         <div className="space-y-6">
+          {/* Card Nuvem Google Drive */}
+          <div className="bg-gradient-to-br from-blue-950/40 via-slate-900/60 to-slate-900 border border-blue-500/20 rounded-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                  <Cloud className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-white text-base flex items-center gap-2">
+                    Sincronização em Nuvem (Google Drive)
+                    {googleUser && (
+                      <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                        Conectado
+                      </span>
+                    )}
+                  </h4>
+                  <p className="text-xs text-slate-400">
+                    Mantenha seus registros sincronizados entre computador e celular de graça, salvando no seu próprio Drive.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={onOpenDriveModal}
+                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition shadow-lg shadow-blue-600/20 cursor-pointer"
+              >
+                {googleUser ? 'Gerenciar Nuvem' : 'Conectar Google Drive'}
+              </button>
+            </div>
+
+            {googleUser && (
+              <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+                <span>Conta: <strong className="text-slate-200">{googleUser.email}</strong></span>
+                <span>Arquivo: <code className="text-blue-400">{DRIVE_FILENAME}</code></span>
+              </div>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Exportar Backup */}
             <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 space-y-3">

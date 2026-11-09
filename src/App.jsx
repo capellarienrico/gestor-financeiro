@@ -6,23 +6,140 @@ import { RecurringTab } from './components/RecurringTab'
 import { DailyForecastAssistant } from './components/DailyForecastAssistant'
 import { SettingsTab } from './components/SettingsTab'
 import { NubankImportModal } from './components/NubankImportModal'
+import { GoogleDriveModal } from './components/GoogleDriveModal'
 import {
   loadFinancialData,
   saveFinancialData,
   exportBackup,
   resetToDefaults
 } from './utils/storage'
+import {
+  requestGoogleLogin,
+  logoutGoogle,
+  getCachedGoogleUser,
+  getValidAccessToken,
+  syncDataWithDrive,
+  updateDriveFile,
+  readDriveFileContent,
+  findDriveFile
+} from './utils/googleDriveService'
 import { calculateFinancialForecast, formatCurrency } from './utils/financialMath'
 
 export function App() {
   const [data, setData] = useState(() => loadFinancialData())
   const [activeTab, setActiveTab] = useState('spreadsheet')
   const [isNubankModalOpen, setIsNubankModalOpen] = useState(false)
+  const [isDriveModalOpen, setIsDriveModalOpen] = useState(false)
+
+  // Google Drive Nuvem State
+  const [googleUser, setGoogleUser] = useState(() => getCachedGoogleUser())
+  const [driveFileId, setDriveFileId] = useState(() => localStorage.getItem('gdrive_file_id'))
+  const [lastSyncTime, setLastSyncTime] = useState(() => localStorage.getItem('gdrive_last_sync'))
+  const [isSyncing, setIsSyncing] = useState(false)
+  const [syncError, setSyncError] = useState(null)
 
   // Persist to localStorage whenever data changes
   useEffect(() => {
     saveFinancialData(data)
   }, [data])
+
+  // Auto-sync to Google Drive (debounced by 2.5s)
+  useEffect(() => {
+    const token = getValidAccessToken()
+    if (!googleUser || !token || !driveFileId) return
+
+    const timer = setTimeout(async () => {
+      try {
+        await updateDriveFile(token, driveFileId, data)
+        const now = new Date().toISOString()
+        setLastSyncTime(now)
+      } catch (err) {
+        console.warn('Auto-sync ao Google Drive falhou:', err)
+      }
+    }, 2500)
+
+    return () => clearTimeout(timer)
+  }, [data, googleUser, driveFileId])
+
+  // Google Login & Initial Sync
+  const handleGoogleLogin = async () => {
+    try {
+      setIsSyncing(true)
+      setSyncError(null)
+      const { token, user } = await requestGoogleLogin()
+      setGoogleUser(user)
+
+      // Search if file already exists in Drive
+      const existing = await findDriveFile(token)
+      if (existing) {
+        setDriveFileId(existing.id)
+        // Load remote data
+        try {
+          const remoteData = await readDriveFileContent(token, existing.id)
+          if (remoteData && (remoteData.transactions || remoteData.currentBalance !== undefined)) {
+            setData(remoteData)
+            const now = new Date().toISOString()
+            setLastSyncTime(now)
+          }
+        } catch (readErr) {
+          console.error('Erro ao ler dados existentes do Drive:', readErr)
+        }
+      } else {
+        // Create file in Drive with current local data
+        const res = await syncDataWithDrive(token, data)
+        setDriveFileId(res.fileId)
+        setLastSyncTime(res.syncTime)
+      }
+    } catch (err) {
+      console.error(err)
+      setSyncError(err.message || 'Falha ao conectar com Google Drive')
+    } finally {
+      setIsSyncing(false)
+    }
+  }
+
+  const handleGoogleLogout = () => {
+    logoutGoogle()
+    setGoogleUser(null)
+    setDriveFileId(null)
+    setLastSyncTime(null)
+  }
+
+  const handleForceUpload = async () => {
+    const token = getValidAccessToken()
+    if (!token) throw new Error('Sessão expirada. Por favor, conecte-se novamente ao Google.')
+    setIsSyncing(true)
+    setSyncError(null)
+    try {
+      const res = await syncDataWithDrive(token, data, { forceUpload: true })
+      setDriveFileId(res.fileId)
+      setLastSyncTime(res.syncTime)
+    } catch (err) {
+      setSyncError(err.message)
+      throw err
+    } finally {
+      setIsSyncing(false)
+    }
+  }
+
+  const handleForceDownload = async () => {
+    const token = getValidAccessToken()
+    if (!token) throw new Error('Sessão expirada. Por favor, conecte-se novamente ao Google.')
+    setIsSyncing(true)
+    setSyncError(null)
+    try {
+      const res = await syncDataWithDrive(token, data, { forceDownload: true })
+      if (res.data) {
+        setData(res.data)
+        setLastSyncTime(res.syncTime)
+      }
+    } catch (err) {
+      setSyncError(err.message)
+      throw err
+    } finally {
+      setIsSyncing(false)
+    }
+  }
 
   const forecast = calculateFinancialForecast(data)
 
@@ -206,6 +323,9 @@ export function App() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onOpenNubankModal={() => setIsNubankModalOpen(true)}
+        googleUser={googleUser}
+        isSyncing={isSyncing}
+        onOpenDriveModal={() => setIsDriveModalOpen(true)}
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -268,9 +388,27 @@ export function App() {
             onExportBackup={() => exportBackup(data)}
             onRestoreBackup={handleRestoreBackup}
             onResetData={handleResetData}
+            googleUser={googleUser}
+            lastSyncTime={lastSyncTime}
+            onOpenDriveModal={() => setIsDriveModalOpen(true)}
           />
         )}
       </main>
+
+      {/* Google Drive Modal */}
+      <GoogleDriveModal
+        isOpen={isDriveModalOpen}
+        onClose={() => setIsDriveModalOpen(false)}
+        googleUser={googleUser}
+        isSyncing={isSyncing}
+        lastSyncTime={lastSyncTime}
+        syncError={syncError}
+        fileId={driveFileId}
+        onLogin={handleGoogleLogin}
+        onLogout={handleGoogleLogout}
+        onForceUpload={handleForceUpload}
+        onForceDownload={handleForceDownload}
+      />
 
       {/* Nubank Import Modal */}
       <NubankImportModal
@@ -282,7 +420,7 @@ export function App() {
 
       {/* Footer */}
       <footer className="border-t border-slate-900 py-6 text-center text-xs text-slate-500">
-        <p>Gestor Financeiro Pessoal & Planilha Mensal • 100% dos dados salvos no seu navegador de forma privada</p>
+        <p>Gestor Financeiro Pessoal & Planilha Mensal • 100% dos dados salvos no seu navegador e sincronizados no seu Google Drive</p>
       </footer>
     </div>
   )
