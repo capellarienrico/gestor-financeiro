@@ -20,6 +20,8 @@ import {
 import { importBackup } from '../utils/storage'
 import { DRIVE_FILENAME } from '../utils/googleDriveService'
 import { calculateCreditCardDueDate, DEFAULT_CARD_SETTINGS } from '../utils/creditCardCycle'
+import { testGeminiApiKey } from '../utils/geminiCategorizer'
+import { cleanMerchantName } from '../utils/categories'
 
 export function SettingsTab({
   categories,
@@ -37,10 +39,14 @@ export function SettingsTab({
   onResetData,
   googleUser,
   lastSyncTime,
-  onOpenDriveModal
+  onOpenDriveModal,
+  merchantRules = {},
+  onUpdateMerchantRules,
+  geminiApiKey = '',
+  onUpdateGeminiApiKey
 }) {
   // Navigation state
-  const [activeSubTab, setActiveSubTab] = useState('expenses') // 'expenses' | 'incomes' | 'card' | 'general'
+  const [activeSubTab, setActiveSubTab] = useState('expenses') // 'expenses' | 'incomes' | 'card' | 'ai' | 'general'
   const [newCatName, setNewCatName] = useState('')
   const [newCatColor, setNewCatColor] = useState('#3b82f6')
 
@@ -48,6 +54,50 @@ export function SettingsTab({
   const [cardClosingDay, setCardClosingDay] = useState(creditCardSettings?.closingDay ?? 15)
   const [cardDueDay, setCardDueDay] = useState(creditCardSettings?.dueDay ?? 25)
   const [cardSavedFeedback, setCardSavedFeedback] = useState(false)
+
+  // Local AI & Merchant state
+  const [inputApiKey, setInputApiKey] = useState(geminiApiKey || '')
+  const [aiTestStatus, setAiTestStatus] = useState(null) // 'testing' | 'success' | 'error'
+  const [aiTestError, setAiTestError] = useState('')
+  const [merchantSearch, setMerchantSearch] = useState('')
+  const [newMerchantName, setNewMerchantName] = useState('')
+  const [newMerchantCategory, setNewMerchantCategory] = useState(categories[0]?.id || 'alimentacao')
+
+  const handleSaveAndTestApiKey = async () => {
+    if (!inputApiKey.trim()) {
+      onUpdateGeminiApiKey('')
+      setAiTestStatus(null)
+      return
+    }
+    setAiTestStatus('testing')
+    setAiTestError('')
+    try {
+      await testGeminiApiKey(inputApiKey)
+      onUpdateGeminiApiKey(inputApiKey.trim())
+      setAiTestStatus('success')
+    } catch (err) {
+      setAiTestStatus('error')
+      setAiTestError(err.message)
+    }
+  }
+
+  const handleAddMerchantRule = (e) => {
+    e.preventDefault()
+    if (!newMerchantName.trim()) return
+    const cleanKey = cleanMerchantName(newMerchantName)
+    const updated = {
+      ...(merchantRules || {}),
+      [cleanKey]: newMerchantCategory
+    }
+    onUpdateMerchantRules(updated)
+    setNewMerchantName('')
+  }
+
+  const handleDeleteMerchantRule = (keyToDelete) => {
+    const updated = { ...(merchantRules || {}) }
+    delete updated[keyToDelete]
+    onUpdateMerchantRules(updated)
+  }
 
   // Edit category modal/state
   const [editingCat, setEditingCat] = useState(null)
@@ -181,6 +231,17 @@ export function SettingsTab({
         >
           <CreditCard className="w-3.5 h-3.5" />
           <span>Cartão de Crédito ({cardDueDay ? `Venc. ${cardDueDay}` : 'Fatura'})</span>
+        </button>
+        <button
+          onClick={() => setActiveSubTab('ai')}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center space-x-1.5 ${
+            activeSubTab === 'ai'
+              ? 'bg-purple-600/30 text-purple-300 border border-purple-500/40'
+              : 'bg-slate-900 text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <span>IA & Estabelecimentos ({Object.keys(merchantRules || {}).length})</span>
         </button>
         <button
           onClick={() => setActiveSubTab('general')}
@@ -492,6 +553,186 @@ export function SettingsTab({
                 <Check className="w-4 h-4" />
                 <span>Salvar Ciclo do Cartão</span>
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SubTab: IA & Regras de Estabelecimentos */}
+      {activeSubTab === 'ai' && (
+        <div className="space-y-6">
+          {/* Card Configuração da API do Gemini */}
+          <div className="bg-gradient-to-br from-indigo-950/40 via-purple-950/20 to-slate-900 border border-purple-500/30 rounded-2xl p-6 space-y-4">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center justify-center shrink-0">
+                  <Sparkles className="w-5 h-5 text-amber-400" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-base flex items-center gap-2">
+                    Inteligência Artificial (Google Gemini Flash)
+                    {geminiApiKey && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
+                        Chave Ativa
+                      </span>
+                    )}
+                  </h4>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Classifique faturas e compras do cartão em lote com IA gratuita.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2 space-y-3">
+              <div>
+                <label className="text-xs text-slate-400 block mb-1 font-medium">
+                  Chave de API do Google Gemini (Gratuita):
+                </label>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="password"
+                    placeholder="AIzaSy..."
+                    value={inputApiKey}
+                    onChange={e => setInputApiKey(e.target.value)}
+                    className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs font-mono text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  />
+                  <button
+                    onClick={handleSaveAndTestApiKey}
+                    disabled={aiTestStatus === 'testing'}
+                    className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs transition shadow-lg shadow-purple-600/20 flex items-center justify-center space-x-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                  >
+                    <span>{aiTestStatus === 'testing' ? 'Testando...' : 'Salvar & Testar Chave'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {aiTestStatus === 'success' && (
+                <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-xs text-emerald-300 flex items-center space-x-2">
+                  <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>Conexão com a IA do Gemini realizada com sucesso!</span>
+                </div>
+              )}
+
+              {aiTestStatus === 'error' && (
+                <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-300 flex items-center space-x-2">
+                  <RotateCcw className="w-4 h-4 text-rose-400 shrink-0" />
+                  <span>Falha na verificação: {aiTestError}</span>
+                </div>
+              )}
+
+              <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 text-[11px] text-slate-400 space-y-1">
+                <span className="font-semibold text-slate-300 block">Como obter sua chave em 30 segundos (Grátis):</span>
+                <p>1. Acesse o <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-purple-400 hover:underline">Google AI Studio (aistudio.google.com)</a> com sua conta Google.</p>
+                <p>2. Clique em <strong>"Create API Key"</strong> e copie a chave gerada.</p>
+                <p>3. Cole no campo acima e clique em "Salvar & Testar". A cota pessoal gratuita da Google permite classificar milhares de compras por mês sem custo.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Dicionário de Estabelecimentos Memorizados */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-800">
+              <div>
+                <h4 className="font-bold text-white text-base flex items-center gap-2">
+                  Memória de Estabelecimentos (Merchants)
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-normal">
+                    {Object.keys(merchantRules || {}).length} regras salvas
+                  </span>
+                </h4>
+                <p className="text-xs text-slate-400">
+                  O app memoriza suas lojas favoritas. Compras futuras nesses locais são categorizadas no ato.
+                </p>
+              </div>
+
+              <input
+                type="text"
+                placeholder="Filtrar lojas..."
+                value={merchantSearch}
+                onChange={e => setMerchantSearch(e.target.value)}
+                className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-purple-500 w-full sm:w-48"
+              />
+            </div>
+
+            {/* Form Adicionar Nova Regra */}
+            <form onSubmit={handleAddMerchantRule} className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-col sm:flex-row gap-2.5 items-end">
+              <div className="flex-1 w-full">
+                <label className="text-[11px] text-slate-400 block mb-1 font-medium">Nome do Estabelecimento / Loja:</label>
+                <input
+                  type="text"
+                  placeholder="Ex: Padaria do Bairro, Posto Shell..."
+                  value={newMerchantName}
+                  onChange={e => setNewMerchantName(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  required
+                />
+              </div>
+
+              <div className="w-full sm:w-56">
+                <label className="text-[11px] text-slate-400 block mb-1 font-medium">Categoria:</label>
+                <select
+                  value={newMerchantCategory}
+                  onChange={e => setNewMerchantCategory(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-purple-500 cursor-pointer"
+                >
+                  {categories.map(c => (
+                    <option key={c.id} value={c.id} style={{ color: c.color, backgroundColor: '#0f172a' }}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full sm:w-auto px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center space-x-1 transition cursor-pointer shrink-0"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Salvar Regra</span>
+              </button>
+            </form>
+
+            {/* Lista de Regras */}
+            <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/40 max-h-60 overflow-y-auto">
+              {Object.keys(merchantRules || {}).length === 0 ? (
+                <div className="p-6 text-center text-xs text-slate-500">
+                  Nenhum estabelecimento cadastrado ainda. Conforme você importa faturas, as regras aparecem aqui automaticamente.
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-850">
+                  {Object.entries(merchantRules || {})
+                    .filter(([key]) => !merchantSearch.trim() || key.includes(merchantSearch.toLowerCase()))
+                    .map(([merchantKey, catId]) => {
+                      const catObj = categories.find(c => c.id === catId)
+                      return (
+                        <div key={merchantKey} className="px-3.5 py-2 flex items-center justify-between text-xs hover:bg-slate-800/20 transition">
+                          <div className="flex items-center space-x-2">
+                            <span className="font-semibold text-slate-200 capitalize">{merchantKey}</span>
+                            <span className="text-slate-500">&rarr;</span>
+                            <span
+                              className="px-2 py-0.5 rounded-full text-[10px] font-bold border"
+                              style={{
+                                color: catObj?.color || '#94a3b8',
+                                borderColor: (catObj?.color || '#94a3b8') + '33',
+                                backgroundColor: (catObj?.color || '#94a3b8') + '15'
+                              }}
+                            >
+                              {catObj?.name || catId}
+                            </span>
+                          </div>
+
+                          <button
+                            onClick={() => handleDeleteMerchantRule(merchantKey)}
+                            className="p-1 text-slate-500 hover:text-rose-400 rounded hover:bg-rose-500/10 transition cursor-pointer"
+                            title="Remover regra"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )
+                    })}
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -384,6 +384,25 @@ export function App() {
     })
   }
 
+  // Merchant rules & AI Key Handlers
+  const handleUpdateMerchantRules = (newRules) => {
+    setData(prev => ({ ...prev, merchantRules: newRules }))
+  }
+
+  const handleUpdateGeminiApiKey = (key) => {
+    setData(prev => ({ ...prev, geminiApiKey: key }))
+  }
+
+  const handleSaveMerchantRules = (rulesToMerge) => {
+    setData(prev => ({
+      ...prev,
+      merchantRules: {
+        ...(prev.merchantRules || {}),
+        ...rulesToMerge
+      }
+    }))
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
       <Navbar
@@ -465,6 +484,10 @@ export function App() {
             googleUser={googleUser}
             lastSyncTime={lastSyncTime}
             onOpenDriveModal={() => setIsDriveModalOpen(true)}
+            merchantRules={data.merchantRules}
+            onUpdateMerchantRules={handleUpdateMerchantRules}
+            geminiApiKey={data.geminiApiKey}
+            onUpdateGeminiApiKey={handleUpdateGeminiApiKey}
           />
         )}
       </main>
@@ -490,6 +513,10 @@ export function App() {
         onClose={() => setIsNubankModalOpen(false)}
         onApplyNubankAnalysis={handleApplyNubankAnalysis}
         onImportTransactions={handleImportTransactions}
+        categories={data.categories}
+        merchantRules={data.merchantRules}
+        onSaveMerchantRules={handleSaveMerchantRules}
+        geminiApiKey={data.geminiApiKey}
       />
 
       {/* Scenario Simulator Modal ('E Se?') */}

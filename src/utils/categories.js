@@ -32,9 +32,37 @@ export const CATEGORY_KEYWORDS = {
   pessoal: ['zara', 'renner', 'riachuelo', 'mercado livre', 'shein', 'shopee', 'aliexpress', 'cabelo', 'barbearia', 'salao'],
 }
 
-export function autoCategorize(text = '', defaultCategory = 'outros', customList = null) {
+/**
+ * Cleans bank / card invoice prefix strings to isolate merchant name
+ * e.g. "PAG*PadariaEstrela 01/02" -> "padariaestrela"
+ */
+export function cleanMerchantName(text = '') {
+  if (!text) return ''
+  return text
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/^(pag\*|mp\*|pagar\.me\*|picpay\*|ifd\*|ubr\*|cl\*|st\*|dl\*|sumup\*|stone\*|cielo\*|rede\*)\s*/i, '')
+    .replace(/\s+\d{1,2}\/\d{1,2}.*$/, '') // remove installment markers like "01/03"
+    .replace(/[*_#-]+/g, ' ')
+    .trim()
+}
+
+export function autoCategorize(text = '', defaultCategory = 'outros', customList = null, merchantRules = {}) {
   if (!text) return defaultCategory
   const lower = text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+  const cleaned = cleanMerchantName(text)
+
+  // 1. Prioridade máxima: Regras de Merchant aprendidas pelo Usuário
+  if (merchantRules && typeof merchantRules === 'object') {
+    for (const [merchantKey, catId] of Object.entries(merchantRules)) {
+      const cleanKey = merchantKey.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()
+      if (cleanKey && (lower.includes(cleanKey) || cleaned.includes(cleanKey))) {
+        return catId
+      }
+    }
+  }
+
+  // 2. Dicionário padrão de palavras-chave do Brasil
   for (const [catId, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
     for (const kw of keywords) {
       if (kw.length <= 4) {
@@ -48,6 +76,7 @@ export function autoCategorize(text = '', defaultCategory = 'outros', customList
       }
     }
   }
+
   return defaultCategory
 }
 

@@ -74,7 +74,17 @@ export const DEFAULT_DATA = {
     servicos: 200,
     pessoal: 300,
     outros: 200
-  }
+  },
+  merchantRules: {
+    'ifood': 'alimentacao',
+    'uber': 'transporte',
+    'netflix': 'lazer',
+    'spotify': 'lazer',
+    'droga raia': 'saude',
+    'drogasil': 'saude',
+    'mercado livre': 'pessoal'
+  },
+  geminiApiKey: ''
 }
 
 export function loadFinancialData() {
@@ -98,11 +108,18 @@ export function loadFinancialData() {
         dueDay: 25
       }
 
+      const merchantRules = {
+        ...DEFAULT_DATA.merchantRules,
+        ...(parsed.merchantRules || {})
+      }
+
       return {
         ...DEFAULT_DATA,
         ...parsed,
         startingPoint,
         creditCardSettings,
+        merchantRules,
+        geminiApiKey: parsed.geminiApiKey || '',
         categories: parsed.categories && parsed.categories.length ? parsed.categories : DEFAULT_CATEGORIES,
         incomeCategories: parsed.incomeCategories && parsed.incomeCategories.length ? parsed.incomeCategories : DEFAULT_INCOME_CATEGORIES
       }

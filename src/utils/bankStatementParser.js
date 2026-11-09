@@ -26,7 +26,7 @@ export const BRAZILIAN_BANKS = {
 /**
  * Universal file entry point: parses OFX or CSV
  */
-export function parseFinancialFile(fileContent, fileName = '') {
+export function parseFinancialFile(fileContent, fileName = '', merchantRules = {}) {
   const content = (fileContent || '').replace(/^\uFEFF/, '').trim() // Remove UTF-8 BOM
 
   const isOfx = fileName.toLowerCase().endsWith('.ofx') ||
@@ -35,16 +35,16 @@ export function parseFinancialFile(fileContent, fileName = '') {
     content.includes('<STMTTRN>')
 
   if (isOfx) {
-    return parseOFX(content, fileName)
+    return parseOFX(content, fileName, merchantRules)
   }
 
-  return parseUniversalCSV(content, fileName)
+  return parseUniversalCSV(content, fileName, merchantRules)
 }
 
 /**
  * Robust Universal OFX Parser (supports both OFX 1.x SGML & OFX 2.x XML)
  */
-export function parseOFX(content, fileName = '') {
+export function parseOFX(content, fileName = '', merchantRules = {}) {
   // Detect Bank Name from OFX tags
   const bankOrgMatch = content.match(/<ORG>([\s\S]*?)(\r?\n|<)/i)
   const bankIdMatch = content.match(/<BANKID>([\s\S]*?)(\r?\n|<)/i)
@@ -125,7 +125,7 @@ export function parseOFX(content, fileName = '') {
 
     let category = 'outros'
     if (isExpense) {
-      category = autoCategorize(description)
+      category = autoCategorize(description, 'outros', null, merchantRules)
     } else {
       category = categorizeIncome(description)
     }
@@ -158,7 +158,7 @@ function extractOfxTag(block, tagName) {
  * Universal Multi-Bank CSV Parser
  * Automatically detects separator, headers, bank format, date formats and amount columns.
  */
-export function parseUniversalCSV(content, fileName = '') {
+export function parseUniversalCSV(content, fileName = '', merchantRules = {}) {
   const lines = content.split(/\r?\n/).map(l => l.trim()).filter(Boolean)
   if (lines.length < 2) {
     throw new Error('Arquivo CSV vazio ou sem dados suficientes.')
@@ -258,7 +258,7 @@ export function parseUniversalCSV(content, fileName = '') {
     const rawCategory = colMap.category !== -1 ? cols[colMap.category] : ''
 
     if (isExpense) {
-      category = autoCategorize(`${description} ${rawCategory}`)
+      category = autoCategorize(`${description} ${rawCategory}`, 'outros', null, merchantRules)
     } else {
       category = categorizeIncome(`${description} ${rawCategory}`)
     }
