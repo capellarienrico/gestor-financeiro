@@ -17,11 +17,10 @@ export function Navbar({
   onOpenNubankModal
 }) {
   const tabs = [
-    { id: 'overview', label: 'Visão Geral & Previsão', icon: TrendingUp },
-    { id: 'spreadsheet', label: 'Planilha Mensal', icon: FileSpreadsheet, badge: 'Excel' },
-    { id: 'daily', label: 'Gastos & Entradas', icon: Wallet },
-    { id: 'recurring', label: 'Recorrentes & Seguro', icon: CalendarCheck },
+    { id: 'spreadsheet', label: 'Planilha Mensal', icon: FileSpreadsheet, badge: 'Principal' },
+    { id: 'overview', label: 'Visão Geral & Runway', icon: TrendingUp },
     { id: 'forecast', label: 'Simulador Diário', icon: Sparkles },
+    { id: 'recurring', label: 'Recorrentes & Seguro', icon: CalendarCheck },
     { id: 'settings', label: 'Configurações', icon: Settings },
   ]
 
@@ -31,7 +30,7 @@ export function Navbar({
         <div className="flex items-center justify-between h-16">
           {/* Logo & Saldo */}
           <div className="flex items-center space-x-6">
-            <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setActiveTab('overview')}>
+            <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setActiveTab('spreadsheet')}>
               <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 font-bold shadow-lg shadow-emerald-500/20">
                 <Wallet className="w-5 h-5 text-slate-950" />
               </div>

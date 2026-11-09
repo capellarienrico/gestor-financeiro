@@ -11,7 +11,7 @@ import {
   Download,
   FileSpreadsheet,
   X,
-  ExternalLink
+  Sparkles
 } from 'lucide-react'
 import { formatCurrency } from '../utils/financialMath'
 import { getCategoryById } from '../utils/categories'
@@ -39,6 +39,8 @@ export function SpreadsheetTab({
   const [formDesc, setFormDesc] = useState('')
   const [formAmount, setFormAmount] = useState('')
   const [formCategory, setFormCategory] = useState('alimentacao')
+
+  const dailyBudgetGoal = data.dailyBudgetGoal || 100
 
   // Month navigation
   const handlePrevMonth = () => {
@@ -137,7 +139,8 @@ export function SpreadsheetTab({
       const dayRecurring = data.recurringExpenses.filter(r => r.dayOfMonth === day)
 
       const totalIn = dayIncomes.reduce((s, t) => s + t.amount, 0)
-      const totalExp = dayExpenses.reduce((s, t) => s + t.amount, 0)
+      const hasActualExpenses = dayExpenses.length > 0
+      const totalExp = hasActualExpenses ? dayExpenses.reduce((s, t) => s + t.amount, 0) : dailyBudgetGoal
       const totalRec = dayRecurring.reduce((s, r) => s + r.amount, 0)
 
       runningBalance = runningBalance + totalIn - totalExp - totalRec
@@ -175,14 +178,23 @@ export function SpreadsheetTab({
     const dayRecurringIn = data.recurringIncomes.filter(r => r.dayOfMonth === day)
 
     const sumIncomes = dayIncomes.reduce((s, t) => s + t.amount, 0) + dayRecurringIn.reduce((s, r) => s + r.amount, 0)
-    const sumExpenses = dayExpenses.reduce((s, t) => s + t.amount, 0)
+    
+    // Check if user filled expenses on this day:
+    const hasManualExpenses = dayExpenses.length > 0
+    // If not filled, use the daily budget goal from the simulator!
+    const effectiveExpense = hasManualExpenses
+      ? dayExpenses.reduce((s, t) => s + t.amount, 0)
+      : dailyBudgetGoal
+
+    const isUsingGoal = !hasManualExpenses
+
     const sumRecurring = dayRecurring.reduce((s, r) => s + r.amount, 0)
 
     monthTotalIn += sumIncomes
-    monthTotalExp += sumExpenses
+    monthTotalExp += effectiveExpense
     monthTotalRec += sumRecurring
 
-    runningBalance = runningBalance + sumIncomes - sumExpenses - sumRecurring
+    runningBalance = runningBalance + sumIncomes - effectiveExpense - sumRecurring
 
     rows.push({
       day,
@@ -195,13 +207,13 @@ export function SpreadsheetTab({
       dayRecurring,
       dayRecurringIn,
       sumIncomes,
-      sumExpenses,
+      effectiveExpense,
+      isUsingGoal,
       sumRecurring,
       saldo: runningBalance
     })
   }
 
-  // Selected Day Details Object
   const activeDayRow = selectedDayDetails ? rows.find(r => r.day === selectedDayDetails) : null
 
   return (
@@ -217,7 +229,7 @@ export function SpreadsheetTab({
               <span>Planilha Mensal de Gastos & Entradas</span>
             </h2>
             <p className="text-xs text-slate-400">
-              Células com valores consolidados no estilo Excel. Clique em qualquer célula para ver a soma e detalhamento do dia.
+              Dias não preenchidos assumem automaticamente a meta do simulador (<strong className="text-indigo-400">{formatCurrency(dailyBudgetGoal)}/dia</strong>). Clique para ver a soma ou lançar o gasto real.
             </p>
           </div>
         </div>
@@ -285,7 +297,6 @@ export function SpreadsheetTab({
             <tbody className="divide-y divide-slate-800/80 font-mono">
               {rows.map((row) => {
                 const hasIncomes = row.sumIncomes > 0
-                const hasExpenses = row.sumExpenses > 0
                 const hasRecurring = row.sumRecurring > 0
 
                 return (
@@ -341,26 +352,39 @@ export function SpreadsheetTab({
                       )}
                     </td>
 
-                    {/* Coluna 3: Gastos diários (Apenas Consolidado) */}
+                    {/* Coluna 3: Gastos diários (Consolidado: Real ou Meta do Simulador) */}
                     <td
                       onClick={() => setSelectedDayDetails(row.day)}
-                      className="py-2.5 px-4 border-r border-slate-800 text-right cursor-pointer hover:bg-rose-500/5 transition group/cell"
-                      title="Clique para ver a soma de cada gasto deste dia"
+                      className={`py-2.5 px-4 border-r border-slate-800 text-right cursor-pointer transition group/cell ${
+                        row.isUsingGoal
+                          ? 'hover:bg-indigo-500/5'
+                          : 'hover:bg-rose-500/5'
+                      }`}
+                      title={row.isUsingGoal ? 'Valor estimado da meta diária. Clique para registrar o gasto real.' : 'Clique para ver a soma de cada gasto deste dia'}
                     >
-                      {hasExpenses ? (
-                        <div className="flex items-center justify-end space-x-1.5">
-                          {row.dayExpenses.length > 1 && (
-                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-rose-500/10 text-rose-400 font-sans border border-rose-500/20">
-                              {row.dayExpenses.length} gastos
+                      <div className="flex items-center justify-end space-x-1.5">
+                        {row.isUsingGoal ? (
+                          <>
+                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-500/10 text-indigo-400 font-sans border border-indigo-500/20">
+                              meta
                             </span>
-                          )}
-                          <span className="font-semibold text-rose-400">
-                            -{formatCurrency(row.sumExpenses)}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-slate-600 font-sans">—</span>
-                      )}
+                            <span className="font-medium text-slate-400 font-mono">
+                              -{formatCurrency(row.effectiveExpense)}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            {row.dayExpenses.length > 1 && (
+                              <span className="text-[10px] px-1.5 py-0.2 rounded bg-rose-500/10 text-rose-400 font-sans border border-rose-500/20">
+                                {row.dayExpenses.length} gastos
+                              </span>
+                            )}
+                            <span className="font-semibold text-rose-400">
+                              -{formatCurrency(row.effectiveExpense)}
+                            </span>
+                          </>
+                        )}
+                      </div>
                     </td>
 
                     {/* Coluna 4: Saídas recorrentes (Apenas Consolidado) */}
@@ -451,13 +475,18 @@ export function SpreadsheetTab({
               </button>
             </div>
 
-            {/* SEÇÃO 1: Gastos Diários (com a soma no estilo 30 + 40 + 20 = 90) */}
+            {/* SEÇÃO 1: Gastos Diários */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-rose-400 uppercase tracking-wider flex items-center space-x-1">
-                  <span>Gastos Diários:</span>
-                  <span className="font-mono font-bold">-{formatCurrency(activeDayRow.sumExpenses)}</span>
-                </span>
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs font-semibold text-rose-400 uppercase tracking-wider">Gastos Diários:</span>
+                  <span className="font-mono font-bold text-xs text-rose-400">-{formatCurrency(activeDayRow.effectiveExpense)}</span>
+                  {activeDayRow.isUsingGoal && (
+                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                      Meta Estimada
+                    </span>
+                  )}
+                </div>
                 <button
                   onClick={() => {
                     handleOpenQuickAdd(activeDayRow.day, 'expense')
@@ -465,7 +494,7 @@ export function SpreadsheetTab({
                   className="px-2 py-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold flex items-center space-x-1 transition cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Adicionar Gasto</span>
+                  <span>{activeDayRow.isUsingGoal ? 'Registrar Gasto Real' : 'Adicionar Outro Gasto'}</span>
                 </button>
               </div>
 
@@ -483,7 +512,7 @@ export function SpreadsheetTab({
                       </React.Fragment>
                     ))}
                     <span className="text-slate-500 font-bold">=</span>
-                    <span className="font-bold text-rose-400 underline">{formatCurrency(activeDayRow.sumExpenses)}</span>
+                    <span className="font-bold text-rose-400 underline">{formatCurrency(activeDayRow.effectiveExpense)}</span>
                   </div>
 
                   {/* Lista de itens para edição rápida */}
@@ -528,8 +557,14 @@ export function SpreadsheetTab({
                   </div>
                 </div>
               ) : (
-                <div className="p-3 rounded-xl bg-slate-950/40 border border-slate-800/60 text-center text-xs text-slate-500">
-                  Nenhum gasto diário registrado neste dia.
+                <div className="p-3 rounded-xl bg-indigo-950/20 border border-indigo-500/20 text-xs space-y-1">
+                  <div className="flex items-center space-x-1.5 text-indigo-400 font-medium">
+                    <Sparkles className="w-4 h-4" />
+                    <span>Usando Meta do Simulador Diário</span>
+                  </div>
+                  <p className="text-slate-400">
+                    Nenhum gasto manual foi preenchido neste dia ainda. O saldo calcula automaticamente <strong className="text-indigo-300 font-mono">{formatCurrency(dailyBudgetGoal)}</strong> com base na sua meta.
+                  </p>
                 </div>
               )}
             </div>

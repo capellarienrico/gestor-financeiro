@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Navbar } from './components/Navbar'
-import { OverviewTab } from './components/OverviewTab'
 import { SpreadsheetTab } from './components/SpreadsheetTab'
-import { DailyExpensesTab } from './components/DailyExpensesTab'
+import { OverviewTab } from './components/OverviewTab'
 import { RecurringTab } from './components/RecurringTab'
 import { DailyForecastAssistant } from './components/DailyForecastAssistant'
 import { SettingsTab } from './components/SettingsTab'
@@ -17,7 +16,7 @@ import { calculateFinancialForecast, formatCurrency } from './utils/financialMat
 
 export function App() {
   const [data, setData] = useState(() => loadFinancialData())
-  const [activeTab, setActiveTab] = useState('spreadsheet') // Start on spreadsheet as requested by user
+  const [activeTab, setActiveTab] = useState('spreadsheet')
   const [isNubankModalOpen, setIsNubankModalOpen] = useState(false)
 
   // Persist to localStorage whenever data changes
@@ -64,9 +63,7 @@ export function App() {
 
       // Calculate balance diff
       let balance = prev.currentBalance
-      // Revert old
       balance += oldTx.type === 'expense' ? oldTx.amount : -oldTx.amount
-      // Apply new
       balance += updatedTx.type === 'expense' ? -updatedTx.amount : updatedTx.amount
 
       return {
@@ -198,15 +195,6 @@ export function App() {
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'overview' && (
-          <OverviewTab
-            data={data}
-            forecast={forecast}
-            onNavigateToForecast={() => setActiveTab('forecast')}
-            onOpenNubankModal={() => setIsNubankModalOpen(true)}
-          />
-        )}
-
         {activeTab === 'spreadsheet' && (
           <SpreadsheetTab
             data={data}
@@ -218,14 +206,12 @@ export function App() {
           />
         )}
 
-        {activeTab === 'daily' && (
-          <DailyExpensesTab
-            transactions={data.transactions}
-            categories={data.categories}
-            incomeCategories={data.incomeCategories}
-            onAddTransaction={handleAddTransaction}
-            onEditTransaction={handleEditTransaction}
-            onDeleteTransaction={handleDeleteTransaction}
+        {activeTab === 'overview' && (
+          <OverviewTab
+            data={data}
+            forecast={forecast}
+            onNavigateToForecast={() => setActiveTab('forecast')}
+            onOpenNubankModal={() => setIsNubankModalOpen(true)}
           />
         )}
 
