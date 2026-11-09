@@ -2,15 +2,21 @@ import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from './categories'
 
 const STORAGE_KEY = 'gestor_financeiro_data_v1'
 
+const todayIso = new Date().toISOString().substring(0, 10)
+
 export const DEFAULT_DATA = {
-  currentBalance: 155000, // Saldo inicial considerando rescisão + FGTS
-  dailyBudgetGoal: 120, // Meta de gasto diário flexível (alimentação/dia a dia)
+  currentBalance: 155000,
+  dailyBudgetGoal: 120,
+  startingPoint: {
+    date: todayIso,
+    balance: 155000
+  },
   categories: DEFAULT_CATEGORIES,
   incomeCategories: DEFAULT_INCOME_CATEGORIES,
   transactions: [
     {
       id: 'tx-1',
-      date: new Date().toISOString().substring(0, 10),
+      date: todayIso,
       description: 'Supermercado da semana',
       amount: 285.50,
       type: 'expense',
@@ -19,7 +25,7 @@ export const DEFAULT_DATA = {
     },
     {
       id: 'tx-2',
-      date: new Date().toISOString().substring(0, 10),
+      date: todayIso,
       description: 'Farmácia',
       amount: 45.90,
       type: 'expense',
@@ -72,9 +78,15 @@ export function loadFinancialData() {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw)
+      const startingPoint = parsed.startingPoint || {
+        date: todayIso,
+        balance: parsed.currentBalance || 155000
+      }
+
       return {
         ...DEFAULT_DATA,
         ...parsed,
+        startingPoint,
         categories: parsed.categories && parsed.categories.length ? parsed.categories : DEFAULT_CATEGORIES,
         incomeCategories: parsed.incomeCategories && parsed.incomeCategories.length ? parsed.incomeCategories : DEFAULT_INCOME_CATEGORIES
       }

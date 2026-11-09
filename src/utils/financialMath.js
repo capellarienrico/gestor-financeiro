@@ -21,8 +21,9 @@ export function getMonthInfo(date = new Date()) {
 
 export function calculateFinancialForecast(data) {
   const {
-    currentBalance = 0,
+    currentBalance = 155000,
     dailyBudgetGoal = 100,
+    startingPoint = null,
     transactions = [],
     recurringExpenses = [],
     recurringIncomes = []
@@ -30,8 +31,17 @@ export function calculateFinancialForecast(data) {
 
   const { today, totalDays, daysRemaining, currentMonthKey } = getMonthInfo()
 
-  // 1. Transactions in current month
-  const currentMonthTransactions = transactions.filter(t => t.date.startsWith(currentMonthKey))
+  // Determine starting point
+  const startIso = startingPoint?.date || new Date().toISOString().substring(0, 10)
+  const startBalance = typeof startingPoint?.balance === 'number' ? startingPoint.balance : currentBalance
+  const startDay = startIso.startsWith(currentMonthKey)
+    ? parseInt(startIso.substring(8, 10), 10)
+    : today
+
+  const daysToProject = Math.max(0, totalDays - startDay + 1)
+
+  // 1. Transactions in current month from starting day onwards
+  const currentMonthTransactions = transactions.filter(t => t.date.startsWith(currentMonthKey) && t.date >= startIso)
   const spentSoFar = currentMonthTransactions
     .filter(t => t.type === 'expense')
     .reduce((acc, t) => acc + t.amount, 0)
@@ -43,20 +53,20 @@ export function calculateFinancialForecast(data) {
   const totalMonthlyRecurringExpenses = recurringExpenses.reduce((acc, item) => acc + item.amount, 0)
   const totalMonthlyRecurringIncomes = recurringIncomes.reduce((acc, item) => acc + item.amount, 0)
 
-  // 3. Remaining recurring items this month (due from today onwards)
+  // 3. Remaining recurring items from start day onwards
   const remainingRecurringExpenses = recurringExpenses
-    .filter(item => item.dayOfMonth >= today)
+    .filter(item => item.dayOfMonth >= startDay)
     .reduce((acc, item) => acc + item.amount, 0)
 
   const remainingRecurringIncomes = recurringIncomes
-    .filter(item => item.dayOfMonth >= today)
+    .filter(item => item.dayOfMonth >= startDay)
     .reduce((acc, item) => acc + item.amount, 0)
 
-  // 4. Projected variable spending for the rest of the month
-  const projectedVariableSpending = dailyBudgetGoal * daysRemaining
+  // 4. Projected variable spending for the rest of the month from start day onwards
+  const projectedVariableSpending = dailyBudgetGoal * Math.max(0, totalDays - startDay)
 
   // 5. Projected balance at the end of the month
-  const projectedEndOfMonthBalance = currentBalance + remainingRecurringIncomes - remainingRecurringExpenses - projectedVariableSpending
+  const projectedEndOfMonthBalance = startBalance + remainingRecurringIncomes - remainingRecurringExpenses - projectedVariableSpending
 
   // 6. Monthly Burn Rate & Runway Calculation
   const estimatedMonthlyVariableSpending = dailyBudgetGoal * 30
@@ -65,18 +75,15 @@ export function calculateFinancialForecast(data) {
 
   let runwayMonths = 999
   if (estimatedNetMonthlyBurn > 0) {
-    runwayMonths = Math.max(0, currentBalance / estimatedNetMonthlyBurn)
+    runwayMonths = Math.max(0, startBalance / estimatedNetMonthlyBurn)
   }
 
-  // 7. Calculate "Recommended Daily Budget" to break even (not burn capital)
-  // Break-even daily budget = (Total Recurring Incomes - Total Recurring Expenses) / 30
   const breakEvenDailyBudget = Math.max(0, (totalMonthlyRecurringIncomes - totalMonthlyRecurringExpenses) / 30)
 
-  // 8. Calculate how much daily budget you can spend to maintain balance over X months
-  const safeDailyBudgetFor12Months = Math.max(0, ((currentBalance / 12) + totalMonthlyRecurringIncomes - totalMonthlyRecurringExpenses) / 30)
-  const safeDailyBudgetFor24Months = Math.max(0, ((currentBalance / 24) + totalMonthlyRecurringIncomes - totalMonthlyRecurringExpenses) / 30)
-
   return {
+    startBalance,
+    startDay,
+    startIso,
     spentSoFar,
     earnedSoFar,
     totalMonthlyRecurringExpenses,
@@ -89,9 +96,7 @@ export function calculateFinancialForecast(data) {
     estimatedNetMonthlyBurn,
     runwayMonths: Math.round(runwayMonths * 10) / 10,
     breakEvenDailyBudget: Math.round(breakEvenDailyBudget),
-    safeDailyBudgetFor12Months: Math.round(safeDailyBudgetFor12Months),
-    safeDailyBudgetFor24Months: Math.round(safeDailyBudgetFor24Months),
-    daysRemaining,
+    daysRemaining: daysToProject,
     today,
     totalDays
   }

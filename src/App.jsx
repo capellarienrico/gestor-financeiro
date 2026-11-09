@@ -26,9 +26,24 @@ export function App() {
 
   const forecast = calculateFinancialForecast(data)
 
-  // Balance and Goal updates
+  // Balance, Starting Point and Goal updates
   const handleUpdateBalance = (newBalance) => {
-    setData(prev => ({ ...prev, currentBalance: newBalance }))
+    setData(prev => ({
+      ...prev,
+      currentBalance: newBalance,
+      startingPoint: {
+        ...prev.startingPoint,
+        balance: newBalance
+      }
+    }))
+  }
+
+  const handleUpdateStartingPoint = (newStartingPoint) => {
+    setData(prev => ({
+      ...prev,
+      startingPoint: newStartingPoint,
+      currentBalance: newStartingPoint.balance
+    }))
   }
 
   const handleUpdateDailyGoal = (newGoal) => {
@@ -61,7 +76,6 @@ export function App() {
       const oldTx = prev.transactions.find(t => t.id === updatedTx.id)
       if (!oldTx) return prev
 
-      // Calculate balance diff
       let balance = prev.currentBalance
       balance += oldTx.type === 'expense' ? oldTx.amount : -oldTx.amount
       balance += updatedTx.type === 'expense' ? -updatedTx.amount : updatedTx.amount
@@ -203,6 +217,7 @@ export function App() {
             onAddTransaction={handleAddTransaction}
             onEditTransaction={handleEditTransaction}
             onDeleteTransaction={handleDeleteTransaction}
+            onUpdateStartingPoint={handleUpdateStartingPoint}
           />
         )}
 

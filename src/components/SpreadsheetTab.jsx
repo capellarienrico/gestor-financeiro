@@ -11,7 +11,9 @@ import {
   Download,
   FileSpreadsheet,
   X,
-  Sparkles
+  Sparkles,
+  Flag,
+  RotateCcw
 } from 'lucide-react'
 import { formatCurrency } from '../utils/financialMath'
 import { getCategoryById } from '../utils/categories'
@@ -22,14 +24,17 @@ export function SpreadsheetTab({
   incomeCategories,
   onAddTransaction,
   onEditTransaction,
-  onDeleteTransaction
+  onDeleteTransaction,
+  onUpdateStartingPoint
 }) {
   const todayDate = new Date()
+  const todayIso = todayDate.toISOString().substring(0, 10)
+  
   const [selectedYear, setSelectedYear] = useState(todayDate.getFullYear())
   const [selectedMonth, setSelectedMonth] = useState(todayDate.getMonth())
 
   // Day Details / Breakdown Modal state
-  const [selectedDayDetails, setSelectedDayDetails] = useState(null) // day number
+  const [selectedDayDetails, setSelectedDayDetails] = useState(null)
 
   // Add / Edit Transaction Form Modal state
   const [modalOpen, setModalOpen] = useState(false)
@@ -41,6 +46,7 @@ export function SpreadsheetTab({
   const [formCategory, setFormCategory] = useState('alimentacao')
 
   const dailyBudgetGoal = data.dailyBudgetGoal || 100
+  const startingPoint = data.startingPoint || { date: todayIso, balance: data.currentBalance || 155000 }
 
   // Month navigation
   const handlePrevMonth = () => {
@@ -125,40 +131,8 @@ export function SpreadsheetTab({
     setModalOpen(false)
   }
 
-  // Export spreadsheet as CSV
-  const handleExportCSV = () => {
-    let csv = `Dia,Entradas,Gastos Diários,Saídas Recorrentes,Saldo\n`
-    let runningBalance = data.currentBalance
-
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dayStr = String(day).padStart(2, '0')
-      const dateKey = `${currentMonthKey}-${dayStr}`
-      const dayTxs = monthTransactions.filter(t => t.date === dateKey)
-      const dayIncomes = dayTxs.filter(t => t.type === 'income')
-      const dayExpenses = dayTxs.filter(t => t.type === 'expense')
-      const dayRecurring = data.recurringExpenses.filter(r => r.dayOfMonth === day)
-
-      const totalIn = dayIncomes.reduce((s, t) => s + t.amount, 0)
-      const hasActualExpenses = dayExpenses.length > 0
-      const totalExp = hasActualExpenses ? dayExpenses.reduce((s, t) => s + t.amount, 0) : dailyBudgetGoal
-      const totalRec = dayRecurring.reduce((s, r) => s + r.amount, 0)
-
-      runningBalance = runningBalance + totalIn - totalExp - totalRec
-
-      csv += `"${day}","${totalIn}","${totalExp}","${totalRec}","${runningBalance.toFixed(2)}"\n`
-    }
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `planilha-${capitalizedMonth}-${selectedYear}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
-  // Calculate day-by-day rows
-  let runningBalance = data.currentBalance
+  // Calculate day-by-day rows based on Starting Point!
+  let runningBalance = null
   let monthTotalIn = 0
   let monthTotalExp = 0
   let monthTotalRec = 0
@@ -170,6 +144,10 @@ export function SpreadsheetTab({
     const dayDate = new Date(selectedYear, selectedMonth, day)
     const weekDay = dayDate.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '')
 
+    const isStartingDate = dateKey === startingPoint.date
+    const isBeforeStartingDate = dateKey < startingPoint.date
+    const isFromStartingDateOnwards = dateKey >= startingPoint.date
+
     const dayTxs = monthTransactions.filter(t => t.date === dateKey)
     const dayIncomes = dayTxs.filter(t => t.type === 'income')
     const dayExpenses = dayTxs.filter(t => t.type === 'expense')
@@ -177,24 +155,36 @@ export function SpreadsheetTab({
     const dayRecurring = data.recurringExpenses.filter(r => r.dayOfMonth === day)
     const dayRecurringIn = data.recurringIncomes.filter(r => r.dayOfMonth === day)
 
-    const sumIncomes = dayIncomes.reduce((s, t) => s + t.amount, 0) + dayRecurringIn.reduce((s, r) => s + r.amount, 0)
+    const sumIncomes = dayIncomes.reduce((s, t) => s + t.amount, 0) + (isFromStartingDateOnwards ? dayRecurringIn.reduce((s, r) => s + r.amount, 0) : 0)
     
-    // Check if user filled expenses on this day:
     const hasManualExpenses = dayExpenses.length > 0
-    // If not filled, use the daily budget goal from the simulator!
-    const effectiveExpense = hasManualExpenses
-      ? dayExpenses.reduce((s, t) => s + t.amount, 0)
-      : dailyBudgetGoal
+    let effectiveExpense = 0
+    let isUsingGoal = false
 
-    const isUsingGoal = !hasManualExpenses
+    if (hasManualExpenses) {
+      effectiveExpense = dayExpenses.reduce((s, t) => s + t.amount, 0)
+    } else if (isFromStartingDateOnwards) {
+      // Only project simulator meta for days from starting point onwards!
+      effectiveExpense = dailyBudgetGoal
+      isUsingGoal = true
+    }
 
-    const sumRecurring = dayRecurring.reduce((s, r) => s + r.amount, 0)
+    const sumRecurring = isFromStartingDateOnwards
+      ? dayRecurring.reduce((s, r) => s + r.amount, 0)
+      : 0
 
-    monthTotalIn += sumIncomes
-    monthTotalExp += effectiveExpense
-    monthTotalRec += sumRecurring
+    if (isStartingDate) {
+      // Start balance initializes here!
+      runningBalance = startingPoint.balance + sumIncomes - effectiveExpense - sumRecurring
+    } else if (isFromStartingDateOnwards && runningBalance !== null) {
+      runningBalance = runningBalance + sumIncomes - effectiveExpense - sumRecurring
+    }
 
-    runningBalance = runningBalance + sumIncomes - effectiveExpense - sumRecurring
+    if (isFromStartingDateOnwards) {
+      monthTotalIn += sumIncomes
+      monthTotalExp += effectiveExpense
+      monthTotalRec += sumRecurring
+    }
 
     rows.push({
       day,
@@ -202,6 +192,9 @@ export function SpreadsheetTab({
       dateKey,
       isToday: isCurrentActualMonth && day === todayNumber,
       isWeekend: dayDate.getDay() === 0 || dayDate.getDay() === 6,
+      isStartingDate,
+      isBeforeStartingDate,
+      isFromStartingDateOnwards,
       dayIncomes,
       dayExpenses,
       dayRecurring,
@@ -210,14 +203,88 @@ export function SpreadsheetTab({
       effectiveExpense,
       isUsingGoal,
       sumRecurring,
-      saldo: runningBalance
+      saldo: isFromStartingDateOnwards ? runningBalance : null
     })
   }
 
   const activeDayRow = selectedDayDetails ? rows.find(r => r.day === selectedDayDetails) : null
 
+  // Export spreadsheet as CSV
+  const handleExportCSV = () => {
+    let csv = `Dia,Entradas,Gastos Diários,Saídas Recorrentes,Saldo\n`
+    for (const r of rows) {
+      const inVal = r.sumIncomes > 0 ? r.sumIncomes : 0
+      const expVal = r.effectiveExpense > 0 ? r.effectiveExpense : 0
+      const recVal = r.sumRecurring > 0 ? r.sumRecurring : 0
+      const salVal = r.saldo !== null ? r.saldo.toFixed(2) : ''
+      csv += `"${r.day}","${inVal}","${expVal}","${recVal}","${salVal}"\n`
+    }
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `planilha-${capitalizedMonth}-${selectedYear}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="space-y-6">
+      {/* BARRA DE DEFINIÇÃO DO PONTO DE PARTIDA */}
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-indigo-500/30 rounded-2xl p-4 sm:p-5 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0">
+            <Flag className="w-5 h-5 text-indigo-400" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-white flex items-center space-x-2">
+              <span>Seu Ponto de Partida</span>
+              <span className="text-[11px] font-normal px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                Projeção Ativa
+              </span>
+            </h3>
+            <p className="text-xs text-slate-400">
+              Defina a data exata e o saldo em conta inicial. A planilha projeta as metas e o saldo <strong className="text-white">apenas dali em diante</strong>.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          {/* Data de Partida */}
+          <div className="flex items-center space-x-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5">
+            <span className="text-xs text-slate-400 font-medium">Data:</span>
+            <input
+              type="date"
+              value={startingPoint.date}
+              onChange={e => onUpdateStartingPoint({ ...startingPoint, date: e.target.value })}
+              className="bg-transparent text-white text-xs font-semibold focus:outline-none cursor-pointer"
+            />
+          </div>
+
+          {/* Saldo de Partida */}
+          <div className="flex items-center space-x-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5">
+            <span className="text-xs text-slate-400 font-medium">Saldo Inicial: R$</span>
+            <input
+              type="number"
+              step="100"
+              value={startingPoint.balance}
+              onChange={e => onUpdateStartingPoint({ ...startingPoint, balance: parseFloat(e.target.value) || 0 })}
+              className="w-28 bg-transparent text-emerald-400 text-xs font-bold font-mono focus:outline-none"
+            />
+          </div>
+
+          {/* Botão Definir Hoje */}
+          <button
+            onClick={() => onUpdateStartingPoint({ date: todayIso, balance: data.currentBalance })}
+            className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition cursor-pointer"
+            title="Definir hoje como data de partida"
+          >
+            Partir de Hoje
+          </button>
+        </div>
+      </div>
+
       {/* Top Header & Month Controller */}
       <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center space-x-3">
@@ -229,7 +296,7 @@ export function SpreadsheetTab({
               <span>Planilha Mensal de Gastos & Entradas</span>
             </h2>
             <p className="text-xs text-slate-400">
-              Dias não preenchidos assumem automaticamente a meta do simulador (<strong className="text-indigo-400">{formatCurrency(dailyBudgetGoal)}/dia</strong>). Clique para ver a soma ou lançar o gasto real.
+              Projeção diária com base na sua meta (<strong className="text-indigo-400">{formatCurrency(dailyBudgetGoal)}/dia</strong>) a partir do dia <strong className="text-white">{startingPoint.date.split('-').reverse().join('/')}</strong>.
             </p>
           </div>
         </div>
@@ -286,7 +353,7 @@ export function SpreadsheetTab({
                 </th>
               </tr>
               <tr className="bg-slate-950/80 border-b border-slate-700 text-slate-300 uppercase tracking-wider font-semibold text-[11px]">
-                <th className="py-3 px-3 text-center w-20 border-r border-slate-800">Dia</th>
+                <th className="py-3 px-3 text-center w-24 border-r border-slate-800">Dia</th>
                 <th className="py-3 px-4 w-1/4 border-r border-slate-800 text-right">Entrada</th>
                 <th className="py-3 px-4 w-1/4 border-r border-slate-800 text-right">Gastos diários</th>
                 <th className="py-3 px-4 w-1/4 border-r border-slate-800 text-right">Saídas recorrentes</th>
@@ -303,8 +370,12 @@ export function SpreadsheetTab({
                   <tr
                     key={row.day}
                     className={`transition group ${
-                      row.isToday
-                        ? 'bg-indigo-950/40 ring-1 ring-inset ring-indigo-500/40'
+                      row.isStartingDate
+                        ? 'bg-indigo-950/50 ring-2 ring-inset ring-indigo-500'
+                        : row.isToday
+                        ? 'bg-emerald-950/20 ring-1 ring-inset ring-emerald-500/40'
+                        : row.isBeforeStartingDate
+                        ? 'opacity-60 bg-slate-950/40'
                         : row.isWeekend
                         ? 'bg-slate-950/30 hover:bg-slate-800/40'
                         : 'hover:bg-slate-800/30'
@@ -314,11 +385,16 @@ export function SpreadsheetTab({
                     <td
                       onClick={() => setSelectedDayDetails(row.day)}
                       className="py-2.5 px-3 text-center border-r border-slate-800 font-bold whitespace-nowrap cursor-pointer hover:bg-slate-800/50"
-                      title="Clique para ver os lançamentos deste dia"
+                      title={row.isStartingDate ? 'Ponto de Partida do seu Saldo' : 'Clique para ver os lançamentos deste dia'}
                     >
                       <div className="flex items-center justify-center space-x-1.5">
+                        {row.isStartingDate && (
+                          <Flag className="w-3.5 h-3.5 text-indigo-400 shrink-0" title="Ponto de partida" />
+                        )}
                         <span className={`inline-block px-1.5 py-0.5 rounded text-xs ${
-                          row.isToday
+                          row.isStartingDate
+                            ? 'bg-indigo-600 text-white font-black shadow-md'
+                            : row.isToday
                             ? 'bg-emerald-500 text-slate-950 font-black shadow-md'
                             : 'text-slate-300'
                         }`}>
@@ -352,7 +428,7 @@ export function SpreadsheetTab({
                       )}
                     </td>
 
-                    {/* Coluna 3: Gastos diários (Consolidado: Real ou Meta do Simulador) */}
+                    {/* Coluna 3: Gastos diários (Consolidado: Real ou Meta apenas após data de partida) */}
                     <td
                       onClick={() => setSelectedDayDetails(row.day)}
                       className={`py-2.5 px-4 border-r border-slate-800 text-right cursor-pointer transition group/cell ${
@@ -362,29 +438,33 @@ export function SpreadsheetTab({
                       }`}
                       title={row.isUsingGoal ? 'Valor estimado da meta diária. Clique para registrar o gasto real.' : 'Clique para ver a soma de cada gasto deste dia'}
                     >
-                      <div className="flex items-center justify-end space-x-1.5">
-                        {row.isUsingGoal ? (
-                          <>
-                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-500/10 text-indigo-400 font-sans border border-indigo-500/20">
-                              meta
-                            </span>
-                            <span className="font-medium text-slate-400 font-mono">
-                              -{formatCurrency(row.effectiveExpense)}
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            {row.dayExpenses.length > 1 && (
-                              <span className="text-[10px] px-1.5 py-0.2 rounded bg-rose-500/10 text-rose-400 font-sans border border-rose-500/20">
-                                {row.dayExpenses.length} gastos
+                      {row.isBeforeStartingDate && !row.dayExpenses.length ? (
+                        <span className="text-slate-600 font-sans">—</span>
+                      ) : (
+                        <div className="flex items-center justify-end space-x-1.5">
+                          {row.isUsingGoal ? (
+                            <>
+                              <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-500/10 text-indigo-400 font-sans border border-indigo-500/20">
+                                meta
                               </span>
-                            )}
-                            <span className="font-semibold text-rose-400">
-                              -{formatCurrency(row.effectiveExpense)}
-                            </span>
-                          </>
-                        )}
-                      </div>
+                              <span className="font-medium text-slate-400 font-mono">
+                                -{formatCurrency(row.effectiveExpense)}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              {row.dayExpenses.length > 1 && (
+                                <span className="text-[10px] px-1.5 py-0.2 rounded bg-rose-500/10 text-rose-400 font-sans border border-rose-500/20">
+                                  {row.dayExpenses.length} gastos
+                                </span>
+                              )}
+                              <span className="font-semibold text-rose-400">
+                                -{formatCurrency(row.effectiveExpense)}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      )}
                     </td>
 
                     {/* Coluna 4: Saídas recorrentes (Apenas Consolidado) */}
@@ -409,14 +489,18 @@ export function SpreadsheetTab({
                       )}
                     </td>
 
-                    {/* Coluna 5: Saldo */}
+                    {/* Coluna 5: Saldo (Só projeta do Ponto de Partida em diante) */}
                     <td
                       onClick={() => setSelectedDayDetails(row.day)}
                       className="py-2.5 px-4 text-right font-bold font-mono whitespace-nowrap cursor-pointer hover:bg-slate-800/40"
                     >
-                      <span className={row.saldo >= 0 ? 'text-slate-100' : 'text-rose-400'}>
-                        {formatCurrency(row.saldo)}
-                      </span>
+                      {row.saldo !== null ? (
+                        <span className={row.saldo >= 0 ? 'text-slate-100' : 'text-rose-400'}>
+                          {formatCurrency(row.saldo)}
+                        </span>
+                      ) : (
+                        <span className="text-slate-600 font-sans text-[11px]">anterior</span>
+                      )}
                     </td>
                   </tr>
                 )
@@ -439,7 +523,7 @@ export function SpreadsheetTab({
                   -{formatCurrency(monthTotalRec)}
                 </td>
                 <td className="py-3 px-4 text-right text-emerald-400 font-mono text-sm">
-                  {formatCurrency(runningBalance)}
+                  {runningBalance !== null ? formatCurrency(runningBalance) : '—'}
                 </td>
               </tr>
             </tfoot>
@@ -447,23 +531,36 @@ export function SpreadsheetTab({
         </div>
       </div>
 
-      {/* MODAL DETALHE DO DIA (Aparece ao clicar em qualquer célula do dia) */}
+      {/* MODAL DETALHE DO DIA */}
       {activeDayRow && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl space-y-5 p-6 animate-in fade-in zoom-in-95 duration-150">
             {/* Header do Dia */}
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center font-bold text-base font-mono">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-base font-mono ${
+                  activeDayRow.isStartingDate
+                    ? 'bg-indigo-600 text-white shadow-lg'
+                    : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
+                }`}>
                   {activeDayRow.day}
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-white flex items-center space-x-2">
                     <span>Detalhamento do Dia {activeDayRow.day} de {capitalizedMonth}</span>
                     <span className="text-xs font-normal text-slate-400 uppercase">({activeDayRow.weekDay})</span>
+                    {activeDayRow.isStartingDate && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                        Ponto de Partida
+                      </span>
+                    )}
                   </h3>
                   <p className="text-xs text-slate-400">
-                    Saldo ao fim deste dia: <strong className="text-emerald-400 font-mono">{formatCurrency(activeDayRow.saldo)}</strong>
+                    {activeDayRow.saldo !== null ? (
+                      <>Saldo ao fim deste dia: <strong className="text-emerald-400 font-mono">{formatCurrency(activeDayRow.saldo)}</strong></>
+                    ) : (
+                      <span className="text-slate-500">Dia anterior ao seu ponto de partida configurado.</span>
+                    )}
                   </p>
                 </div>
               </div>
@@ -500,7 +597,6 @@ export function SpreadsheetTab({
 
               {activeDayRow.dayExpenses.length > 0 ? (
                 <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2">
-                  {/* Fórmula Visual somada */}
                   <div className="text-xs font-mono text-slate-300 pb-2 border-b border-slate-800/80 flex flex-wrap items-center gap-1">
                     <span className="text-slate-500 font-sans text-[11px]">Soma do dia:</span>
                     {activeDayRow.dayExpenses.map((exp, idx) => (
@@ -515,7 +611,6 @@ export function SpreadsheetTab({
                     <span className="font-bold text-rose-400 underline">{formatCurrency(activeDayRow.effectiveExpense)}</span>
                   </div>
 
-                  {/* Lista de itens para edição rápida */}
                   <div className="space-y-1.5 pt-1">
                     {activeDayRow.dayExpenses.map((exp) => {
                       const cat = getCategoryById(exp.category, 'expense', categories)
@@ -556,7 +651,7 @@ export function SpreadsheetTab({
                     })}
                   </div>
                 </div>
-              ) : (
+              ) : activeDayRow.isFromStartingDateOnwards ? (
                 <div className="p-3 rounded-xl bg-indigo-950/20 border border-indigo-500/20 text-xs space-y-1">
                   <div className="flex items-center space-x-1.5 text-indigo-400 font-medium">
                     <Sparkles className="w-4 h-4" />
@@ -565,6 +660,10 @@ export function SpreadsheetTab({
                   <p className="text-slate-400">
                     Nenhum gasto manual foi preenchido neste dia ainda. O saldo calcula automaticamente <strong className="text-indigo-300 font-mono">{formatCurrency(dailyBudgetGoal)}</strong> com base na sua meta.
                   </p>
+                </div>
+              ) : (
+                <div className="p-3 rounded-xl bg-slate-950/40 border border-slate-800/60 text-center text-xs text-slate-500">
+                  Dia anterior ao seu ponto de partida. Não houve lançamentos manuais.
                 </div>
               )}
             </div>
@@ -589,7 +688,6 @@ export function SpreadsheetTab({
 
               {activeDayRow.dayIncomes.length > 0 || activeDayRow.dayRecurringIn.length > 0 ? (
                 <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1.5">
-                  {/* Lançamentos normais de entrada */}
                   {activeDayRow.dayIncomes.map((inc) => (
                     <div
                       key={inc.id}
@@ -621,7 +719,6 @@ export function SpreadsheetTab({
                     </div>
                   ))}
 
-                  {/* Entradas recorrentes */}
                   {activeDayRow.dayRecurringIn.map((rIn) => (
                     <div
                       key={rIn.id}
@@ -642,7 +739,7 @@ export function SpreadsheetTab({
               )}
             </div>
 
-            {/* SEÇÃO 3: Saídas Recorrentes (Contas Fixas do dia) */}
+            {/* SEÇÃO 3: Saídas Recorrentes */}
             {activeDayRow.dayRecurring.length > 0 && (
               <div className="space-y-2">
                 <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider block">
@@ -688,7 +785,6 @@ export function SpreadsheetTab({
             </div>
 
             <form onSubmit={handleSaveModal} className="space-y-4">
-              {/* Tipo */}
               <div>
                 <label className="text-xs text-slate-400 block mb-1">Tipo:</label>
                 <div className="grid grid-cols-2 gap-2">
@@ -715,7 +811,6 @@ export function SpreadsheetTab({
                 </div>
               </div>
 
-              {/* Valor */}
               <div>
                 <label className="text-xs text-slate-400 block mb-1">Valor (R$):</label>
                 <input
@@ -730,7 +825,6 @@ export function SpreadsheetTab({
                 />
               </div>
 
-              {/* Descrição */}
               <div>
                 <label className="text-xs text-slate-400 block mb-1">Descrição:</label>
                 <input
@@ -743,7 +837,6 @@ export function SpreadsheetTab({
                 />
               </div>
 
-              {/* Categoria */}
               <div>
                 <label className="text-xs text-slate-400 block mb-1">Categoria:</label>
                 <select
