@@ -9,6 +9,7 @@ import { NubankImportModal } from './components/NubankImportModal'
 import { GoogleDriveModal } from './components/GoogleDriveModal'
 import { ScenarioSimulatorModal } from './components/ScenarioSimulatorModal'
 import { QuickExpenseFloatingButton } from './components/QuickExpenseFloatingButton'
+import { ReleasesModal } from './components/ReleasesModal'
 import {
   loadFinancialData,
   saveFinancialData,
@@ -33,6 +34,7 @@ export function App() {
   const [isNubankModalOpen, setIsNubankModalOpen] = useState(false)
   const [isDriveModalOpen, setIsDriveModalOpen] = useState(false)
   const [isScenarioModalOpen, setIsScenarioModalOpen] = useState(false)
+  const [isReleasesModalOpen, setIsReleasesModalOpen] = useState(false)
 
   // Google Drive Nuvem State
   const [googleUser, setGoogleUser] = useState(() => getCachedGoogleUser())
@@ -414,6 +416,7 @@ export function App() {
         googleUser={googleUser}
         isSyncing={isSyncing}
         onOpenDriveModal={() => setIsDriveModalOpen(true)}
+        onOpenReleasesModal={() => setIsReleasesModalOpen(true)}
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 pb-28 md:pb-8">
@@ -488,6 +491,7 @@ export function App() {
             onUpdateMerchantRules={handleUpdateMerchantRules}
             geminiApiKey={data.geminiApiKey}
             onUpdateGeminiApiKey={handleUpdateGeminiApiKey}
+            onOpenReleasesModal={() => setIsReleasesModalOpen(true)}
           />
         )}
       </main>
@@ -534,9 +538,34 @@ export function App() {
         categories={data.categories}
       />
 
+      {/* Releases & Changelog Modal (Starts at v1.0.0) */}
+      <ReleasesModal
+        isOpen={isReleasesModalOpen}
+        onClose={() => setIsReleasesModalOpen(false)}
+      />
+
       {/* Footer */}
-      <footer className="border-t border-slate-900 py-6 text-center text-xs text-slate-500">
+      <footer className="border-t border-slate-900 py-6 text-center text-xs text-slate-500 space-y-2">
         <p>Gestor Financeiro Pessoal & Planilha Mensal • 100% dos dados salvos no seu navegador e sincronizados no seu Google Drive</p>
+        <div className="flex items-center justify-center space-x-3 text-slate-400">
+          <button
+            type="button"
+            onClick={() => setIsReleasesModalOpen(true)}
+            className="hover:text-emerald-400 font-mono font-bold transition flex items-center space-x-1 cursor-pointer bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-full text-[11px]"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <span>Versão 1.0.0 • Ver Notas de Release</span>
+          </button>
+          <span>•</span>
+          <a
+            href="https://github.com/capellarienrico/gestor-financeiro"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-slate-200 transition underline underline-offset-2"
+          >
+            GitHub
+          </a>
+        </div>
       </footer>
     </div>
   )

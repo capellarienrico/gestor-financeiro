@@ -18,7 +18,8 @@ export function Navbar({
   onOpenNubankModal,
   googleUser,
   isSyncing,
-  onOpenDriveModal
+  onOpenDriveModal,
+  onOpenReleasesModal
 }) {
   const tabs = [
     { id: 'spreadsheet', label: 'Planilha', fullLabel: 'Planilha Mensal', icon: FileSpreadsheet, badge: 'Principal' },
@@ -44,9 +45,22 @@ export function Navbar({
                   <Wallet className="w-4 h-4 sm:w-5 sm:h-5 text-slate-950" />
                 </div>
                 <div>
-                  <span className="font-bold text-sm sm:text-base text-white tracking-tight">Finanças & Runway</span>
-                  <span className="hidden sm:inline-block ml-2 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-wider">
-                    Projeção Ativa
+                  <div className="flex items-center space-x-1.5">
+                    <span className="font-bold text-sm sm:text-base text-white tracking-tight">Finanças & Runway</span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onOpenReleasesModal?.()
+                      }}
+                      className="px-1.5 py-0.2 sm:px-2 sm:py-0.5 text-[10px] font-mono font-bold rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 transition cursor-pointer active:scale-95 shadow-sm"
+                      title="Ver notas de lançamento da versão 1.0.0"
+                    >
+                      v1.0.0
+                    </button>
+                  </div>
+                  <span className="hidden sm:inline-block text-[10px] text-slate-400 font-medium">
+                    Projeção Ativa & Saldo Real
                   </span>
                 </div>
               </div>

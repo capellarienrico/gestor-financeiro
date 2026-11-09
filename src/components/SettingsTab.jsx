@@ -43,7 +43,8 @@ export function SettingsTab({
   merchantRules = {},
   onUpdateMerchantRules,
   geminiApiKey = '',
-  onUpdateGeminiApiKey
+  onUpdateGeminiApiKey,
+  onOpenReleasesModal
 }) {
   // Navigation state
   const [activeSubTab, setActiveSubTab] = useState('expenses') // 'expenses' | 'incomes' | 'card' | 'ai' | 'general'
@@ -817,6 +818,39 @@ export function SettingsTab({
                   onChange={handleFileImport}
                 />
               </label>
+            </div>
+          </div>
+
+          {/* Card Versão do Aplicativo & Releases */}
+          <div className="bg-gradient-to-br from-emerald-950/30 via-slate-900/80 to-slate-900 border border-emerald-500/30 rounded-2xl p-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                  <Tag className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <h4 className="font-bold text-white text-sm">Gestor Financeiro & Runway</h4>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      v1.0.0
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400">
+                    Versão estável oficial com conciliação de faturas, rendimento CDI, IA Gemini e suporte nativo Android.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={onOpenReleasesModal}
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition cursor-pointer shadow-lg shadow-emerald-600/20 flex items-center space-x-1.5"
+                >
+                  <Tag className="w-3.5 h-3.5" />
+                  <span>Ver Notas da Versão</span>
+                </button>
+              </div>
             </div>
           </div>
 
