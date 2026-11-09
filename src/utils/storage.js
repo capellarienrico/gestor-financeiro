@@ -1,8 +1,12 @@
+import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from './categories'
+
 const STORAGE_KEY = 'gestor_financeiro_data_v1'
 
 export const DEFAULT_DATA = {
   currentBalance: 155000, // Saldo inicial considerando rescisão + FGTS
   dailyBudgetGoal: 120, // Meta de gasto diário flexível (alimentação/dia a dia)
+  categories: DEFAULT_CATEGORIES,
+  incomeCategories: DEFAULT_INCOME_CATEGORIES,
   transactions: [
     {
       id: 'tx-1',
@@ -68,7 +72,12 @@ export function loadFinancialData() {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw)
-      return { ...DEFAULT_DATA, ...parsed }
+      return {
+        ...DEFAULT_DATA,
+        ...parsed,
+        categories: parsed.categories && parsed.categories.length ? parsed.categories : DEFAULT_CATEGORIES,
+        incomeCategories: parsed.incomeCategories && parsed.incomeCategories.length ? parsed.incomeCategories : DEFAULT_INCOME_CATEGORIES
+      }
     }
   } catch (err) {
     console.error('Erro ao ler localStorage:', err)
@@ -92,6 +101,21 @@ export function exportBackup(data) {
   a.download = `backup-financas-${new Date().toISOString().substring(0, 10)}.json`
   a.click()
   URL.revokeObjectURL(url)
+}
+
+export function importBackup(file, onSuccess, onError) {
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    try {
+      const parsed = JSON.parse(e.target.result)
+      if (!parsed || typeof parsed !== 'object') throw new Error('Formato inválido')
+      onSuccess(parsed)
+    } catch (err) {
+      onError(err.message || 'Erro ao carregar arquivo de backup')
+    }
+  }
+  reader.onerror = () => onError('Erro na leitura do arquivo')
+  reader.readAsText(file)
 }
 
 export function resetToDefaults() {

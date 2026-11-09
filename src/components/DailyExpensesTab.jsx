@@ -1,11 +1,14 @@
 import React, { useState } from 'react'
-import { Plus, Trash2, Search, Filter, ArrowUpRight, ArrowDownLeft, Calendar } from 'lucide-react'
-import { CATEGORIES, INCOME_CATEGORIES, getCategoryById } from '../utils/categories'
+import { Plus, Trash2, Edit2, Search, ArrowUpRight, ArrowDownLeft, Check, X } from 'lucide-react'
+import { getCategoryById } from '../utils/categories'
 import { formatCurrency, getMonthInfo } from '../utils/financialMath'
 
 export function DailyExpensesTab({
   transactions,
+  categories,
+  incomeCategories,
   onAddTransaction,
+  onEditTransaction,
   onDeleteTransaction
 }) {
   const { currentMonthKey, monthName } = getMonthInfo()
@@ -13,14 +16,37 @@ export function DailyExpensesTab({
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [selectedType, setSelectedType] = useState('all') // 'all', 'expense', 'income'
 
-  // New transaction form state
+  // Form state (used for both Add and Edit)
   const [isFormOpen, setIsFormOpen] = useState(false)
+  const [editingId, setEditingId] = useState(null) // null = new, id = editing
   const [type, setType] = useState('expense')
   const [description, setDescription] = useState('')
   const [amount, setAmount] = useState('')
   const [date, setDate] = useState(new Date().toISOString().substring(0, 10))
   const [category, setCategory] = useState('alimentacao')
   const [source, setSource] = useState('Pix')
+
+  const handleOpenAdd = () => {
+    setEditingId(null)
+    setType('expense')
+    setDescription('')
+    setAmount('')
+    setDate(new Date().toISOString().substring(0, 10))
+    setCategory(categories[0]?.id || 'alimentacao')
+    setSource('Pix')
+    setIsFormOpen(true)
+  }
+
+  const handleStartEdit = (t) => {
+    setEditingId(t.id)
+    setType(t.type)
+    setDescription(t.description)
+    setAmount(t.amount.toString())
+    setDate(t.date)
+    setCategory(t.category)
+    setSource(t.source || 'Manual')
+    setIsFormOpen(true)
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -30,20 +56,31 @@ export function DailyExpensesTab({
       return
     }
 
-    onAddTransaction({
-      id: 'tx-' + Date.now(),
-      date,
-      description: description.trim(),
-      amount: numAmount,
-      type,
-      category,
-      source
-    })
+    if (editingId) {
+      onEditTransaction({
+        id: editingId,
+        date,
+        description: description.trim(),
+        amount: numAmount,
+        type,
+        category,
+        source
+      })
+    } else {
+      onAddTransaction({
+        id: 'tx-' + Date.now(),
+        date,
+        description: description.trim(),
+        amount: numAmount,
+        type,
+        category,
+        source
+      })
+    }
 
     // Reset
-    setDescription('')
-    setAmount('')
     setIsFormOpen(false)
+    setEditingId(null)
   }
 
   // Filter transactions
@@ -59,10 +96,6 @@ export function DailyExpensesTab({
     .filter(t => t.date.startsWith(currentMonthKey) && t.type === 'expense')
     .reduce((sum, t) => sum + t.amount, 0)
 
-  const monthlyIncomes = transactions
-    .filter(t => t.date.startsWith(currentMonthKey) && t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0)
-
   return (
     <div className="space-y-6">
       {/* Top Header & Quick Summary */}
@@ -70,7 +103,7 @@ export function DailyExpensesTab({
         <div>
           <h2 className="text-xl font-bold text-white">Lançamentos do Dia a Dia</h2>
           <p className="text-slate-400 text-sm">
-            Registre despesas diárias (almoço, farmácia, compras) e entradas pontuais.
+            Histórico completo de despesas diárias e entradas avulsas com edição e filtros.
           </p>
         </div>
 
@@ -80,7 +113,7 @@ export function DailyExpensesTab({
             <span className="text-lg font-bold text-rose-400">{formatCurrency(monthlyExpenses)}</span>
           </div>
           <button
-            onClick={() => setIsFormOpen(!isFormOpen)}
+            onClick={handleOpenAdd}
             className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm transition flex items-center space-x-2 shadow-lg shadow-emerald-600/20 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
@@ -89,12 +122,21 @@ export function DailyExpensesTab({
         </div>
       </div>
 
-      {/* Form de Adicionar (colapsável) */}
+      {/* Form de Adicionar / Editar (colapsável) */}
       {isFormOpen && (
         <form onSubmit={handleSubmit} className="bg-slate-900 border border-emerald-500/30 rounded-2xl p-6 space-y-4 shadow-xl">
-          <h3 className="text-base font-semibold text-white flex items-center space-x-2">
-            <span>Adicionar Novo Lançamento</span>
-          </h3>
+          <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+            <h3 className="text-base font-semibold text-white flex items-center space-x-2">
+              <span>{editingId ? 'Editar Lançamento' : 'Adicionar Novo Lançamento'}</span>
+            </h3>
+            <button
+              type="button"
+              onClick={() => setIsFormOpen(false)}
+              className="text-slate-400 hover:text-white cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             {/* Tipo */}
@@ -103,7 +145,7 @@ export function DailyExpensesTab({
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  onClick={() => { setType('expense'); setCategory('alimentacao'); }}
+                  onClick={() => { setType('expense'); setCategory(categories[0]?.id || 'alimentacao'); }}
                   className={`py-2 rounded-lg text-xs font-semibold flex items-center justify-center space-x-1 cursor-pointer transition ${
                     type === 'expense' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-slate-800 text-slate-400'
                   }`}
@@ -113,7 +155,7 @@ export function DailyExpensesTab({
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setType('income'); setCategory('outros_in'); }}
+                  onClick={() => { setType('income'); setCategory(incomeCategories[0]?.id || 'outros_in'); }}
                   className={`py-2 rounded-lg text-xs font-semibold flex items-center justify-center space-x-1 cursor-pointer transition ${
                     type === 'income' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400'
                   }`}
@@ -158,7 +200,7 @@ export function DailyExpensesTab({
                 onChange={e => setCategory(e.target.value)}
                 className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
               >
-                {(type === 'expense' ? CATEGORIES : INCOME_CATEGORIES).map(cat => (
+                {(type === 'expense' ? categories : incomeCategories).map(cat => (
                   <option key={cat.id} value={cat.id}>
                     {cat.name}
                   </option>
@@ -202,9 +244,9 @@ export function DailyExpensesTab({
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold cursor-pointer"
+              className="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold cursor-pointer shadow-lg shadow-emerald-600/20"
             >
-              Salvar Lançamento
+              {editingId ? 'Salvar Alterações' : 'Salvar Lançamento'}
             </button>
           </div>
         </form>
@@ -242,7 +284,7 @@ export function DailyExpensesTab({
             className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none cursor-pointer"
           >
             <option value="all">Todas as categorias</option>
-            {CATEGORIES.map(c => (
+            {categories.map(c => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
@@ -265,7 +307,7 @@ export function DailyExpensesTab({
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-sm">
               {filtered.map(t => {
-                const cat = getCategoryById(t.category, t.type)
+                const cat = getCategoryById(t.category, t.type, t.type === 'income' ? incomeCategories : categories)
                 const isExpense = t.type === 'expense'
 
                 return (
@@ -288,13 +330,22 @@ export function DailyExpensesTab({
                       {isExpense ? '-' : '+'}{formatCurrency(t.amount)}
                     </td>
                     <td className="py-3.5 px-4 text-center">
-                      <button
-                        onClick={() => onDeleteTransaction(t.id)}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
-                        title="Remover lançamento"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center justify-center space-x-1">
+                        <button
+                          onClick={() => handleStartEdit(t)}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+                          title="Editar lançamento"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => onDeleteTransaction(t.id)}
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
+                          title="Remover lançamento"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 )

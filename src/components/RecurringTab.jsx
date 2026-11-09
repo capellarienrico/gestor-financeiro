@@ -1,73 +1,138 @@
 import React, { useState } from 'react'
-import { Plus, Trash2, Calendar, Clock, CheckCircle2, ShieldCheck, TrendingUp, AlertCircle } from 'lucide-react'
-import { CATEGORIES, INCOME_CATEGORIES, getCategoryById } from '../utils/categories'
+import { Plus, Trash2, Edit2, Calendar, Clock, CheckCircle2, ShieldCheck, TrendingUp, X } from 'lucide-react'
+import { getCategoryById } from '../utils/categories'
 import { formatCurrency, getMonthInfo } from '../utils/financialMath'
 
 export function RecurringTab({
   recurringExpenses,
   recurringIncomes,
+  categories,
+  incomeCategories,
   onAddRecurringExpense,
+  onEditRecurringExpense,
   onDeleteRecurringExpense,
   onAddRecurringIncome,
+  onEditRecurringIncome,
   onDeleteRecurringIncome,
   onPostRecurringToDaily
 }) {
   const { today, monthName } = getMonthInfo()
 
-  // New recurring expense modal/form
+  // Recurring expense form state
   const [isExpFormOpen, setIsExpFormOpen] = useState(false)
+  const [editingExpId, setEditingExpId] = useState(null)
   const [expDesc, setExpDesc] = useState('')
   const [expAmount, setExpAmount] = useState('')
   const [expDay, setExpDay] = useState(10)
-  const [expCategory, setExpCategory] = useState('moradia')
+  const [expCategory, setExpCategory] = useState(categories[0]?.id || 'moradia')
 
-  // New recurring income form
+  // Recurring income form state
   const [isIncFormOpen, setIsIncFormOpen] = useState(false)
+  const [editingIncId, setEditingIncId] = useState(null)
   const [incDesc, setIncDesc] = useState('')
   const [incAmount, setIncAmount] = useState('')
   const [incDay, setIncDay] = useState(5)
-  const [incCategory, setIncCategory] = useState('rendimentos')
+  const [incCategory, setIncCategory] = useState(incomeCategories[0]?.id || 'rendimentos')
   const [incInstallments, setIncInstallments] = useState('')
 
-  const handleAddExp = (e) => {
+  // Expense Handlers
+  const handleOpenAddExp = () => {
+    setEditingExpId(null)
+    setExpDesc('')
+    setExpAmount('')
+    setExpDay(10)
+    setExpCategory(categories[0]?.id || 'moradia')
+    setIsExpFormOpen(true)
+  }
+
+  const handleStartEditExp = (item) => {
+    setEditingExpId(item.id)
+    setExpDesc(item.description)
+    setExpAmount(item.amount.toString())
+    setExpDay(item.dayOfMonth)
+    setExpCategory(item.category)
+    setIsExpFormOpen(true)
+  }
+
+  const handleSaveExp = (e) => {
     e.preventDefault()
     const amt = parseFloat(expAmount)
     if (!expDesc.trim() || isNaN(amt) || amt <= 0) return
 
-    onAddRecurringExpense({
-      id: 'rec-exp-' + Date.now(),
-      description: expDesc.trim(),
-      amount: amt,
-      dayOfMonth: parseInt(expDay, 10),
-      category: expCategory
-    })
+    if (editingExpId) {
+      onEditRecurringExpense({
+        id: editingExpId,
+        description: expDesc.trim(),
+        amount: amt,
+        dayOfMonth: parseInt(expDay, 10),
+        category: expCategory
+      })
+    } else {
+      onAddRecurringExpense({
+        id: 'rec-exp-' + Date.now(),
+        description: expDesc.trim(),
+        amount: amt,
+        dayOfMonth: parseInt(expDay, 10),
+        category: expCategory
+      })
+    }
 
-    setExpDesc('')
-    setExpAmount('')
     setIsExpFormOpen(false)
+    setEditingExpId(null)
   }
 
-  const handleAddInc = (e) => {
+  // Income Handlers
+  const handleOpenAddInc = () => {
+    setEditingIncId(null)
+    setIncDesc('')
+    setIncAmount('')
+    setIncDay(5)
+    setIncCategory(incomeCategories[0]?.id || 'rendimentos')
+    setIncInstallments('')
+    setIsIncFormOpen(true)
+  }
+
+  const handleStartEditInc = (item) => {
+    setEditingIncId(item.id)
+    setIncDesc(item.description)
+    setIncAmount(item.amount.toString())
+    setIncDay(item.dayOfMonth)
+    setIncCategory(item.category)
+    setIncInstallments(item.totalInstallments ? item.totalInstallments.toString() : '')
+    setIsIncFormOpen(true)
+  }
+
+  const handleSaveInc = (e) => {
     e.preventDefault()
     const amt = parseFloat(incAmount)
     if (!incDesc.trim() || isNaN(amt) || amt <= 0) return
 
     const installments = incInstallments ? parseInt(incInstallments, 10) : null
 
-    onAddRecurringIncome({
-      id: 'rec-inc-' + Date.now(),
-      description: incDesc.trim(),
-      amount: amt,
-      dayOfMonth: parseInt(incDay, 10),
-      category: incCategory,
-      totalInstallments: installments,
-      remainingInstallments: installments
-    })
+    if (editingIncId) {
+      onEditRecurringIncome({
+        id: editingIncId,
+        description: incDesc.trim(),
+        amount: amt,
+        dayOfMonth: parseInt(incDay, 10),
+        category: incCategory,
+        totalInstallments: installments,
+        remainingInstallments: installments
+      })
+    } else {
+      onAddRecurringIncome({
+        id: 'rec-inc-' + Date.now(),
+        description: incDesc.trim(),
+        amount: amt,
+        dayOfMonth: parseInt(incDay, 10),
+        category: incCategory,
+        totalInstallments: installments,
+        remainingInstallments: installments
+      })
+    }
 
-    setIncDesc('')
-    setIncAmount('')
-    setIncInstallments('')
     setIsIncFormOpen(false)
+    setEditingIncId(null)
   }
 
   const totalMonthlyExpenses = recurringExpenses.reduce((s, e) => s + e.amount, 0)
@@ -84,7 +149,7 @@ export function RecurringTab({
             <p className="text-xs text-slate-500">{recurringExpenses.length} itens cadastrados</p>
           </div>
           <button
-            onClick={() => setIsExpFormOpen(!isExpFormOpen)}
+            onClick={handleOpenAddExp}
             className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center space-x-1.5 transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
@@ -99,7 +164,7 @@ export function RecurringTab({
             <p className="text-xs text-slate-500">Seguro-Desemprego + Rendimento CDI</p>
           </div>
           <button
-            onClick={() => setIsIncFormOpen(!isIncFormOpen)}
+            onClick={handleOpenAddInc}
             className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center space-x-1.5 transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
@@ -108,10 +173,18 @@ export function RecurringTab({
         </div>
       </div>
 
-      {/* Formulário Novo Gasto Fixo */}
+      {/* Formulário Novo / Edição de Gasto Fixo */}
       {isExpFormOpen && (
-        <form onSubmit={handleAddExp} className="bg-slate-900 border border-rose-500/30 rounded-2xl p-6 space-y-4 shadow-xl">
-          <h3 className="text-base font-semibold text-white">Cadastrar Gasto Recorrente (Todo dia X do mês)</h3>
+        <form onSubmit={handleSaveExp} className="bg-slate-900 border border-rose-500/30 rounded-2xl p-6 space-y-4 shadow-xl">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+            <h3 className="text-base font-semibold text-white">
+              {editingExpId ? 'Editar Gasto Recorrente' : 'Cadastrar Gasto Recorrente (Todo dia X do mês)'}
+            </h3>
+            <button type="button" onClick={() => setIsExpFormOpen(false)} className="text-slate-400 hover:text-white cursor-pointer">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div className="sm:col-span-2">
               <label className="text-xs text-slate-400 block mb-1">Descrição:</label>
@@ -148,6 +221,18 @@ export function RecurringTab({
                 required
               />
             </div>
+            <div className="sm:col-span-2">
+              <label className="text-xs text-slate-400 block mb-1">Categoria:</label>
+              <select
+                value={expCategory}
+                onChange={e => setExpCategory(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-rose-500 cursor-pointer"
+              >
+                {categories.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="flex justify-end space-x-3 pt-2">
             <button
@@ -161,22 +246,30 @@ export function RecurringTab({
               type="submit"
               className="px-5 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold cursor-pointer"
             >
-              Salvar Gasto Fixo
+              {editingExpId ? 'Salvar Alterações' : 'Salvar Gasto Fixo'}
             </button>
           </div>
         </form>
       )}
 
-      {/* Formulário Nova Entrada Fixa */}
+      {/* Formulário Novo / Edição de Entrada Fixa */}
       {isIncFormOpen && (
-        <form onSubmit={handleAddInc} className="bg-slate-900 border border-cyan-500/30 rounded-2xl p-6 space-y-4 shadow-xl">
-          <h3 className="text-base font-semibold text-white">Cadastrar Entrada Recorrente</h3>
+        <form onSubmit={handleSaveInc} className="bg-slate-900 border border-cyan-500/30 rounded-2xl p-6 space-y-4 shadow-xl">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+            <h3 className="text-base font-semibold text-white">
+              {editingIncId ? 'Editar Entrada Recorrente' : 'Cadastrar Entrada Recorrente'}
+            </h3>
+            <button type="button" onClick={() => setIsIncFormOpen(false)} className="text-slate-400 hover:text-white cursor-pointer">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div>
               <label className="text-xs text-slate-400 block mb-1">Descrição:</label>
               <input
                 type="text"
-                placeholder="Ex: Aluguel recebido, Bico fixo..."
+                placeholder="Ex: Seguro-Desemprego, Rendimentos..."
                 value={incDesc}
                 onChange={e => setIncDesc(e.target.value)}
                 className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-cyan-500"
@@ -211,7 +304,7 @@ export function RecurringTab({
               <label className="text-xs text-slate-400 block mb-1">Nº de Parcelas (Opcional):</label>
               <input
                 type="number"
-                placeholder="Ex: 5 (seguro) ou deixe vazio"
+                placeholder="Ex: 5"
                 value={incInstallments}
                 onChange={e => setIncInstallments(e.target.value)}
                 className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-cyan-500"
@@ -230,7 +323,7 @@ export function RecurringTab({
               type="submit"
               className="px-5 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold cursor-pointer"
             >
-              Salvar Entrada
+              {editingIncId ? 'Salvar Alterações' : 'Salvar Entrada'}
             </button>
           </div>
         </form>
@@ -260,7 +353,7 @@ export function RecurringTab({
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-sm">
               {recurringExpenses.sort((a, b) => a.dayOfMonth - b.dayOfMonth).map(item => {
-                const cat = getCategoryById(item.category)
+                const cat = getCategoryById(item.category, 'expense', categories)
                 const isPast = today > item.dayOfMonth
                 const isToday = today === item.dayOfMonth
 
@@ -296,13 +389,20 @@ export function RecurringTab({
                       {formatCurrency(item.amount)}
                     </td>
                     <td className="py-3.5 px-4 text-center">
-                      <div className="flex items-center justify-center space-x-2">
+                      <div className="flex items-center justify-center space-x-1.5">
                         <button
                           onClick={() => onPostRecurringToDaily(item)}
                           className="px-2.5 py-1 rounded bg-slate-800 hover:bg-emerald-600 hover:text-white text-slate-300 text-xs font-medium transition cursor-pointer"
                           title="Lançar como despesa paga hoje"
                         >
                           Lançar Pago
+                        </button>
+                        <button
+                          onClick={() => handleStartEditExp(item)}
+                          className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+                          title="Editar"
+                        >
+                          <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => onDeleteRecurringExpense(item.id)}
@@ -321,7 +421,7 @@ export function RecurringTab({
         </div>
       </div>
 
-      {/* Tabela de Entradas Recorrentes (Seguro-Desemprego & Rendimento CDI) */}
+      {/* Tabela de Entradas Recorrentes */}
       <div className="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden">
         <div className="p-5 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -364,13 +464,22 @@ export function RecurringTab({
                     +{formatCurrency(item.amount)}
                   </td>
                   <td className="py-3.5 px-4 text-center">
-                    <button
-                      onClick={() => onDeleteRecurringIncome(item.id)}
-                      className="p-1 rounded text-slate-500 hover:text-rose-400 transition cursor-pointer"
-                      title="Remover"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center justify-center space-x-1.5">
+                      <button
+                        onClick={() => handleStartEditInc(item)}
+                        className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+                        title="Editar"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => onDeleteRecurringIncome(item.id)}
+                        className="p-1 rounded text-slate-500 hover:text-rose-400 transition cursor-pointer"
+                        title="Remover"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
