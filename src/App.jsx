@@ -7,6 +7,8 @@ import { DailyForecastAssistant } from './components/DailyForecastAssistant'
 import { SettingsTab } from './components/SettingsTab'
 import { NubankImportModal } from './components/NubankImportModal'
 import { GoogleDriveModal } from './components/GoogleDriveModal'
+import { ScenarioSimulatorModal } from './components/ScenarioSimulatorModal'
+import { QuickExpenseFloatingButton } from './components/QuickExpenseFloatingButton'
 import {
   loadFinancialData,
   saveFinancialData,
@@ -30,6 +32,7 @@ export function App() {
   const [activeTab, setActiveTab] = useState('spreadsheet')
   const [isNubankModalOpen, setIsNubankModalOpen] = useState(false)
   const [isDriveModalOpen, setIsDriveModalOpen] = useState(false)
+  const [isScenarioModalOpen, setIsScenarioModalOpen] = useState(false)
 
   // Google Drive Nuvem State
   const [googleUser, setGoogleUser] = useState(() => getCachedGoogleUser())
@@ -165,6 +168,16 @@ export function App() {
 
   const handleUpdateDailyGoal = (newGoal) => {
     setData(prev => ({ ...prev, dailyBudgetGoal: newGoal }))
+  }
+
+  const handleUpdateCreditCardSettings = (newSettings) => {
+    setData(prev => ({
+      ...prev,
+      creditCardSettings: {
+        ...prev.creditCardSettings,
+        ...newSettings
+      }
+    }))
   }
 
   // Categories updates
@@ -305,7 +318,7 @@ export function App() {
   }
 
   const handleResetData = () => {
-    if (confirm('Deseja resetar os dados para os valores padrão de transição pós-demissão?')) {
+    if (confirm('Deseja restaurar os dados para os valores e categorias padrão do aplicativo?')) {
       const reset = resetToDefaults()
       setData(reset)
     }
@@ -313,6 +326,62 @@ export function App() {
 
   const handleRestoreBackup = (importedData) => {
     setData(importedData)
+  }
+
+  const handleApplySimulatedPlan = ({ newDailyGoal, extraIncome, oneTimeExpense }) => {
+    setData(prev => {
+      let updatedBalance = prev.currentBalance
+      let updatedRecurringIncomes = [...prev.recurringIncomes]
+      let updatedTransactions = [...prev.transactions]
+
+      // 1. Meta Diária
+      const updatedDailyGoal = newDailyGoal > 0 ? newDailyGoal : prev.dailyBudgetGoal
+
+      // 2. Renda Extra Mensal (adiciona ou atualiza item recorrente)
+      if (extraIncome > 0) {
+        const existingIdx = updatedRecurringIncomes.findIndex(i => i.id === 'rec-inc-simulated-extra')
+        const newExtraItem = {
+          id: 'rec-inc-simulated-extra',
+          description: `Renda Extra / Freela Simulado (+${formatCurrency(extraIncome)}/mês)`,
+          amount: extraIncome,
+          dayOfMonth: 5,
+          category: 'outros',
+          totalInstallments: null,
+          remainingInstallments: null
+        }
+        if (existingIdx >= 0) {
+          updatedRecurringIncomes[existingIdx] = newExtraItem
+        } else {
+          updatedRecurringIncomes.push(newExtraItem)
+        }
+      }
+
+      // 3. Gasto Extra Pontual (deduz do saldo e gera transação de despesa)
+      if (oneTimeExpense > 0) {
+        updatedBalance = Math.max(0, updatedBalance - oneTimeExpense)
+        const todayStr = new Date().toISOString().substring(0, 10)
+        updatedTransactions = [
+          {
+            id: 'tx-sim-' + Date.now(),
+            date: todayStr,
+            description: `[Gasto Pontual Simulado] Compra/Imprevisto Aplicado`,
+            amount: oneTimeExpense,
+            type: 'expense',
+            category: 'outros',
+            source: 'Reserva'
+          },
+          ...updatedTransactions
+        ]
+      }
+
+      return {
+        ...prev,
+        currentBalance: updatedBalance,
+        dailyBudgetGoal: updatedDailyGoal,
+        recurringIncomes: updatedRecurringIncomes,
+        transactions: updatedTransactions
+      }
+    })
   }
 
   return (
@@ -334,10 +403,12 @@ export function App() {
             data={data}
             categories={data.categories}
             incomeCategories={data.incomeCategories}
+            creditCardSettings={data.creditCardSettings}
             onAddTransaction={handleAddTransaction}
             onEditTransaction={handleEditTransaction}
             onDeleteTransaction={handleDeleteTransaction}
             onUpdateStartingPoint={handleUpdateStartingPoint}
+            onUpdateCreditCardSettings={handleUpdateCreditCardSettings}
           />
         )}
 
@@ -347,6 +418,7 @@ export function App() {
             forecast={forecast}
             onNavigateToForecast={() => setActiveTab('forecast')}
             onOpenNubankModal={() => setIsNubankModalOpen(true)}
+            onOpenScenarioModal={() => setIsScenarioModalOpen(true)}
           />
         )}
 
@@ -379,6 +451,8 @@ export function App() {
           <SettingsTab
             categories={data.categories}
             incomeCategories={data.incomeCategories}
+            creditCardSettings={data.creditCardSettings}
+            onUpdateCreditCardSettings={handleUpdateCreditCardSettings}
             onUpdateCategories={handleUpdateCategories}
             onUpdateIncomeCategories={handleUpdateIncomeCategories}
             currentBalance={data.currentBalance}
@@ -416,6 +490,21 @@ export function App() {
         onClose={() => setIsNubankModalOpen(false)}
         onApplyNubankAnalysis={handleApplyNubankAnalysis}
         onImportTransactions={handleImportTransactions}
+      />
+
+      {/* Scenario Simulator Modal ('E Se?') */}
+      <ScenarioSimulatorModal
+        isOpen={isScenarioModalOpen}
+        onClose={() => setIsScenarioModalOpen(false)}
+        data={data}
+        forecast={forecast}
+        onApplyPlan={handleApplySimulatedPlan}
+      />
+
+      {/* Quick Expense Floating Button (1-Click / Key 'N') */}
+      <QuickExpenseFloatingButton
+        onAddTransaction={handleAddTransaction}
+        categories={data.categories}
       />
 
       {/* Footer */}

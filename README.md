@@ -10,7 +10,7 @@ Desenvolvido para [capellarienrico](https://github.com/capellarienrico).
 - **Assistente & Simulador Diário:** Permite simular: *"Se eu gastar R$ Y por dia, com quanto saldo termino o mês?"* ou calcular o teto diário necessário para atingir uma meta de saldo no último dia do mês.
 - **Gastos Diários & Entradas:** Lançamento rápido de despesas e receitas pontuais com categorização automática, filtros e histórico.
 - **Gastos Recorrentes (Contas Fixas):** Gestão de despesas que vencem todo dia X (financiamento, condomínio, luz, internet, etc.) com acompanhamento de vencimento no mês.
-- **Entradas Recorrentes & Benefícios:** Suporte a parcelas de Seguro-Desemprego (ex: 5 parcelas de R$ 2.400) e estimativa de rendimentos do CDI sobre o capital aplicado.
+- **Entradas Recorrentes & Benefícios:** Suporte a parcelas de recebíveis, salários, freelas e estimativa de rendimentos do CDI sobre o capital aplicado.
 - **Importador Nubank (CSV / OFX):**
   - Lê faturas de cartão de crédito e extratos da NuConta em segundos.
   - 100% privado (processado localmente no navegador, sem tráfego de dados para servidores externos).

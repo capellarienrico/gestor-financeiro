@@ -24,7 +24,7 @@ export function Navbar({
     { id: 'spreadsheet', label: 'Planilha Mensal', icon: FileSpreadsheet, badge: 'Principal' },
     { id: 'overview', label: 'Visão Geral & Runway', icon: TrendingUp },
     { id: 'forecast', label: 'Simulador Diário', icon: Sparkles },
-    { id: 'recurring', label: 'Recorrentes & Seguro', icon: CalendarCheck },
+    { id: 'recurring', label: 'Recorrentes & Fixos', icon: CalendarCheck },
     { id: 'settings', label: 'Configurações', icon: Settings },
   ]
 
@@ -41,7 +41,7 @@ export function Navbar({
               <div>
                 <span className="font-bold text-base text-white tracking-tight">Finanças & Runway</span>
                 <span className="hidden sm:inline-block ml-2 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-wider">
-                  Transição
+                  Projeção Ativa
                 </span>
               </div>
             </div>
@@ -91,10 +91,11 @@ export function Navbar({
 
             <button
               onClick={onOpenNubankModal}
+              title="Importar Extrato Bancário (Nubank, Itaú, Inter, Bradesco, OFX, CSV)"
               className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-medium text-xs sm:text-sm transition shadow-lg shadow-purple-600/20 cursor-pointer"
             >
               <UploadCloud className="w-4 h-4" />
-              <span>Importar Nubank</span>
+              <span>Importar Extrato</span>
             </button>
           </div>
         </div>

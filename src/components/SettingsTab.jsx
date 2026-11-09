@@ -13,14 +13,19 @@ import {
   ShieldCheck,
   Cloud,
   RefreshCw,
-  ExternalLink
+  ExternalLink,
+  CreditCard,
+  Info
 } from 'lucide-react'
 import { importBackup } from '../utils/storage'
 import { DRIVE_FILENAME } from '../utils/googleDriveService'
+import { calculateCreditCardDueDate, DEFAULT_CARD_SETTINGS } from '../utils/creditCardCycle'
 
 export function SettingsTab({
   categories,
   incomeCategories,
+  creditCardSettings = DEFAULT_CARD_SETTINGS,
+  onUpdateCreditCardSettings,
   onUpdateCategories,
   onUpdateIncomeCategories,
   currentBalance,
@@ -34,10 +39,15 @@ export function SettingsTab({
   lastSyncTime,
   onOpenDriveModal
 }) {
-  // New category state
-  const [activeSubTab, setActiveSubTab] = useState('expenses') // 'expenses' | 'incomes' | 'general'
+  // Navigation state
+  const [activeSubTab, setActiveSubTab] = useState('expenses') // 'expenses' | 'incomes' | 'card' | 'general'
   const [newCatName, setNewCatName] = useState('')
   const [newCatColor, setNewCatColor] = useState('#3b82f6')
+
+  // Local card settings state
+  const [cardClosingDay, setCardClosingDay] = useState(creditCardSettings?.closingDay ?? 15)
+  const [cardDueDay, setCardDueDay] = useState(creditCardSettings?.dueDay ?? 25)
+  const [cardSavedFeedback, setCardSavedFeedback] = useState(false)
 
   // Edit category modal/state
   const [editingCat, setEditingCat] = useState(null)
@@ -160,6 +170,17 @@ export function SettingsTab({
           }`}
         >
           Categorias de Entradas ({incomeCategories.length})
+        </button>
+        <button
+          onClick={() => setActiveSubTab('card')}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center space-x-1.5 ${
+            activeSubTab === 'card'
+              ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+              : 'bg-slate-900 text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <CreditCard className="w-3.5 h-3.5" />
+          <span>Cartão de Crédito ({cardDueDay ? `Venc. ${cardDueDay}` : 'Fatura'})</span>
         </button>
         <button
           onClick={() => setActiveSubTab('general')}
@@ -305,6 +326,177 @@ export function SettingsTab({
         </div>
       )}
 
+      {/* SubTab: Cartão de Crédito (Fechamento vs Vencimento) */}
+      {activeSubTab === 'card' && (
+        <div className="space-y-6">
+          <div className="bg-gradient-to-br from-purple-950/40 via-slate-900/80 to-slate-900 border border-purple-500/30 rounded-2xl p-6 space-y-6">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shrink-0">
+                  <CreditCard className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white flex items-center space-x-2">
+                    <span>Ciclo de Fatura do Cartão de Crédito</span>
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                      Fechamento vs. Vencimento
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Configure os dias do seu cartão para que os gastos sejam liquidados no dia exato em que o dinheiro sai do seu saldo.
+                  </p>
+                </div>
+              </div>
+
+              {cardSavedFeedback && (
+                <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-xl animate-fade-in">
+                  ✓ Configurações Salvas!
+                </span>
+              )}
+            </div>
+
+            {/* Config Form */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+              <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-4 space-y-2">
+                <label className="text-xs font-semibold text-slate-300 block">
+                  Dia de Fechamento da Fatura (Melhor dia = Dia seguinte):
+                </label>
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs text-slate-500 font-mono">Dia:</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={cardClosingDay}
+                    onChange={(e) => {
+                      const v = Math.max(1, Math.min(31, parseInt(e.target.value, 10) || 1))
+                      setCardClosingDay(v)
+                    }}
+                    className="w-24 bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-mono font-bold text-sm focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  />
+                  <span className="text-xs text-slate-400">de cada mês</span>
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  Compras feitas até este dia entram na fatura atual. A partir do dia {cardClosingDay >= 31 ? 1 : cardClosingDay + 1}, caem na próxima fatura.
+                </p>
+              </div>
+
+              <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-4 space-y-2">
+                <label className="text-xs font-semibold text-slate-300 block">
+                  Dia de Vencimento / Pagamento da Fatura:
+                </label>
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs text-slate-500 font-mono">Dia:</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={cardDueDay}
+                    onChange={(e) => {
+                      const v = Math.max(1, Math.min(31, parseInt(e.target.value, 10) || 1))
+                      setCardDueDay(v)
+                    }}
+                    className="w-24 bg-slate-900 border border-slate-700 rounded-lg p-2 text-white font-mono font-bold text-sm focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  />
+                  <span className="text-xs text-slate-400">de cada mês</span>
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  Data em que o saldo bancário é efetivamente debitado para quitar o cartão.
+                </p>
+              </div>
+            </div>
+
+            {/* Presets Rápidos */}
+            <div className="space-y-2 pt-1">
+              <span className="text-[11px] text-slate-400 block font-medium">Ciclos mais comuns em bancos brasileiros:</span>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { label: 'Fech. 15 / Venc. 25 (Nubank / Padrão)', c: 15, d: 25 },
+                  { label: 'Fech. 28 / Venc. 05 (Início de Mês)', c: 28, d: 5 },
+                  { label: 'Fech. 20 / Venc. 30 (Fim de Mês)', c: 20, d: 30 },
+                  { label: 'Fech. 05 / Venc. 15 (Meio do Mês)', c: 5, d: 15 },
+                  { label: 'Fech. 10 / Venc. 20 (Itaú / Inter)', c: 10, d: 20 }
+                ].map(p => (
+                  <button
+                    key={p.label}
+                    type="button"
+                    onClick={() => {
+                      setCardClosingDay(p.c)
+                      setCardDueDay(p.d)
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer ${
+                      cardClosingDay === p.c && cardDueDay === p.d
+                        ? 'bg-purple-600/30 text-purple-300 border-purple-500/50 font-semibold'
+                        : 'bg-slate-950/60 text-slate-400 border-slate-800 hover:text-slate-200'
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Exemplo Interativo com a Data de Hoje */}
+            {(() => {
+              const todayStr = new Date().toISOString().substring(0, 10)
+              const todayDay = new Date().getDate()
+              const estimatedDueDate = calculateCreditCardDueDate(todayStr, cardClosingDay, cardDueDay)
+              const formattedDue = estimatedDueDate.split('-').reverse().join('/')
+              const isPastClosing = todayDay > cardClosingDay
+
+              return (
+                <div className="p-4 rounded-xl bg-purple-950/30 border border-purple-500/20 text-xs text-purple-200 space-y-2">
+                  <div className="flex items-center space-x-1.5 font-semibold text-purple-300">
+                    <Info className="w-4 h-4 text-purple-400 shrink-0" />
+                    <span>Como funciona a projeção dos seus gastos:</span>
+                  </div>
+                  <p className="text-slate-300 leading-relaxed">
+                    Hoje é dia <strong>{todayDay}</strong>. Como o seu fechamento está configurado para o dia <strong>{cardClosingDay}</strong>:
+                  </p>
+                  <div className="p-3 rounded-lg bg-slate-950/70 border border-slate-800 font-mono text-xs space-y-1">
+                    <div>
+                      • Uma compra feita <strong>hoje ({todayStr.split('-').reverse().join('/')})</strong> vencerá na fatura de:
+                      <span className="ml-2 font-bold text-purple-400">{formattedDue}</span>
+                      {isPastClosing ? (
+                        <span className="ml-2 text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-sans">
+                          Após o fechamento (Melhor dia! Ganha até 40 dias)
+                        </span>
+                      ) : (
+                        <span className="ml-2 text-[10px] px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-sans">
+                          Antes do fechamento (Fatura atual)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    Na <strong>Planilha Mensal</strong>, você pode alternar a visualização para "Data de Liquidação / Fatura" para enxergar o impacto exato no seu saldo bancário nesta data.
+                  </p>
+                </div>
+              )
+            })()}
+
+            {/* Salvar Botão */}
+            <div className="pt-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  onUpdateCreditCardSettings({
+                    closingDay: cardClosingDay,
+                    dueDay: cardDueDay
+                  })
+                  setCardSavedFeedback(true)
+                  setTimeout(() => setCardSavedFeedback(false), 3000)
+                }}
+                className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs transition cursor-pointer shadow-lg shadow-purple-600/20 flex items-center space-x-2"
+              >
+                <Check className="w-4 h-4" />
+                <span>Salvar Ciclo do Cartão</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* SubTab: Backup & Sistema */}
       {activeSubTab === 'general' && (
         <div className="space-y-6">
@@ -394,7 +586,7 @@ export function SettingsTab({
               <h4 className="font-semibold text-white text-sm">Restaurar Padrões de Fábrica</h4>
             </div>
             <p className="text-xs text-slate-300">
-              Isso apagará os lançamentos atuais e restaurará os dados padrões de transição pós-demissão (R$ 155.000 de saldo, Seguro-Desemprego e contas fixas recomendadas).
+              Isso restaurará as categorias, metas e valores padrão do aplicativo.
             </p>
             <button
               onClick={onResetData}

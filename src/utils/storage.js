@@ -11,6 +11,10 @@ export const DEFAULT_DATA = {
     date: todayIso,
     balance: 155000
   },
+  creditCardSettings: {
+    closingDay: 15,
+    dueDay: 25
+  },
   categories: DEFAULT_CATEGORIES,
   incomeCategories: DEFAULT_INCOME_CATEGORIES,
   transactions: [
@@ -44,12 +48,12 @@ export const DEFAULT_DATA = {
   recurringIncomes: [
     {
       id: 'rec-inc-1',
-      description: 'Seguro-Desemprego (Parcela Teto)',
-      amount: 2400,
-      dayOfMonth: 10,
-      category: 'seguro',
-      totalInstallments: 5,
-      remainingInstallments: 5
+      description: 'Salário / Prestação de Serviço',
+      amount: 4500,
+      dayOfMonth: 5,
+      category: 'salario',
+      totalInstallments: null,
+      remainingInstallments: null
     },
     {
       id: 'rec-inc-2',
@@ -83,10 +87,16 @@ export function loadFinancialData() {
         balance: parsed.currentBalance || 155000
       }
 
+      const creditCardSettings = parsed.creditCardSettings || {
+        closingDay: 15,
+        dueDay: 25
+      }
+
       return {
         ...DEFAULT_DATA,
         ...parsed,
         startingPoint,
+        creditCardSettings,
         categories: parsed.categories && parsed.categories.length ? parsed.categories : DEFAULT_CATEGORIES,
         incomeCategories: parsed.incomeCategories && parsed.incomeCategories.length ? parsed.incomeCategories : DEFAULT_INCOME_CATEGORIES
       }

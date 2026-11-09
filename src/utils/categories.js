@@ -11,11 +11,11 @@ export const DEFAULT_CATEGORIES = [
 ]
 
 export const DEFAULT_INCOME_CATEGORIES = [
-  { id: 'rescisao', name: 'Rescisão & FGTS', color: '#10b981', icon: 'Briefcase', bg: 'bg-emerald-500/10 text-emerald-400' },
-  { id: 'seguro', name: 'Seguro-Desemprego', color: '#06b6d4', icon: 'ShieldCheck', bg: 'bg-cyan-500/10 text-cyan-400' },
-  { id: 'rendimentos', name: 'Rendimentos de Aplicações', color: '#3b82f6', icon: 'TrendingUp', bg: 'bg-blue-500/10 text-blue-400' },
-  { id: 'salario', name: 'Salário / Prestação de Serviço', color: '#8b5cf6', icon: 'Wallet', bg: 'bg-purple-500/10 text-purple-400' },
-  { id: 'outros_in', name: 'Outras Entradas', color: '#64748b', icon: 'ArrowDownLeft', bg: 'bg-slate-500/10 text-slate-400' },
+  { id: 'salario', name: 'Salário / Prestação de Serviço', color: '#10b981', icon: 'Wallet', bg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+  { id: 'rendimentos', name: 'Rendimentos de Aplicações', color: '#3b82f6', icon: 'TrendingUp', bg: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+  { id: 'freelance', name: 'Freelance & Projetos', color: '#8b5cf6', icon: 'Briefcase', bg: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
+  { id: 'beneficios', name: 'Benefícios & Reembolsos', color: '#06b6d4', icon: 'ShieldCheck', bg: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
+  { id: 'outros_in', name: 'Outras Entradas', color: '#64748b', icon: 'ArrowDownLeft', bg: 'bg-slate-500/10 text-slate-400 border-slate-500/20' },
 ]
 
 export const CATEGORIES = DEFAULT_CATEGORIES
@@ -37,7 +37,13 @@ export function autoCategorize(text = '', defaultCategory = 'outros', customList
   const lower = text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
   for (const [catId, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
     for (const kw of keywords) {
-      if (lower.includes(kw)) {
+      if (kw.length <= 4) {
+        // Word boundary match for short keywords (e.g. "gas", "tim", "oi", "luz")
+        const regex = new RegExp(`(^|[^a-z0-9])${kw}([^a-z0-9]|$)`, 'i')
+        if (regex.test(lower)) {
+          return catId
+        }
+      } else if (lower.includes(kw)) {
         return catId
       }
     }

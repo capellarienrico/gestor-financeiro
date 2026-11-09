@@ -1,14 +1,14 @@
 import React from 'react'
 import {
-  TrendingUp,
-  TrendingDown,
   Calendar,
-  AlertCircle,
   Clock,
   CheckCircle2,
-  PieChart as PieChartIcon,
   Flame,
-  ArrowRight
+  ArrowRight,
+  Sparkles,
+  Coins,
+  ShieldCheck,
+  Percent
 } from 'lucide-react'
 import {
   PieChart,
@@ -28,7 +28,8 @@ export function OverviewTab({
   data,
   forecast,
   onNavigateToForecast,
-  onOpenNubankModal
+  onOpenNubankModal,
+  onOpenScenarioModal
 }) {
   const { monthName, daysRemaining, today, totalDays } = getMonthInfo()
 
@@ -80,7 +81,7 @@ export function OverviewTab({
 
   return (
     <div className="space-y-6">
-      {/* Runway / Pós-Demissão Shield Card */}
+      {/* Runway / Fôlego Financeiro Shield Card */}
       <div className="bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-indigo-500/30 rounded-2xl p-6 shadow-xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
         
@@ -88,17 +89,24 @@ export function OverviewTab({
           <div className="space-y-2">
             <div className="flex items-center space-x-2 text-indigo-400 font-semibold text-sm">
               <Flame className="w-5 h-5 text-amber-400 animate-pulse" />
-              <span>Seu Runway Financeiro (Fôlego sem trabalhar)</span>
+              <span>Seu Runway Financeiro (Fôlego Estimado com CDI)</span>
             </div>
             <h2 className="text-3xl font-extrabold text-white">
               {forecast.runwayMonths > 120 ? 'Mais de 10 anos' : `${forecast.runwayMonths} meses de fôlego`}
             </h2>
             <p className="text-slate-300 text-sm max-w-2xl leading-relaxed">
-              Com seu saldo atual ({formatCurrency(data.currentBalance)}), suas entradas automáticas (Seguro-Desemprego + Rendimento CDI somam <span className="text-emerald-400 font-semibold">{formatCurrency(forecast.totalMonthlyRecurringIncomes)}/mês</span>) cobrem boa parte das suas contas. Você só precisa queimar cerca de <span className="text-rose-400 font-semibold">{formatCurrency(Math.max(0, forecast.estimatedNetMonthlyBurn))}/mês</span> do patrimônio principal!
+              Com seu saldo atual ({formatCurrency(data.currentBalance)}), suas entradas automáticas (rendimentos e recebíveis somam <span className="text-emerald-400 font-semibold">{formatCurrency(forecast.totalMonthlyRecurringIncomes)}/mês</span>) cobrem boa parte das suas contas. Você só precisa queimar cerca de <span className="text-rose-400 font-semibold">{formatCurrency(Math.max(0, forecast.estimatedNetMonthlyBurn))}/mês</span> do patrimônio principal!
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={onOpenScenarioModal}
+              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold text-sm transition flex items-center justify-center space-x-2 shadow-lg shadow-emerald-600/30 cursor-pointer"
+            >
+              <Sparkles className="w-4 h-4 text-emerald-200" />
+              <span>Simulador 'E Se?'</span>
+            </button>
             <button
               onClick={onNavigateToForecast}
               className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm transition flex items-center justify-center space-x-2 shadow-lg shadow-indigo-600/20 cursor-pointer"
@@ -108,9 +116,10 @@ export function OverviewTab({
             </button>
             <button
               onClick={onOpenNubankModal}
+              title="Importar Extrato Bancário (Nubank, Itaú, Inter, Bradesco, OFX, CSV)"
               className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm transition flex items-center justify-center space-x-2 border border-slate-700 cursor-pointer"
             >
-              <span>Puxar Médias do Nubank</span>
+              <span>Importar Extrato</span>
             </button>
           </div>
         </div>
@@ -128,7 +137,7 @@ export function OverviewTab({
             {formatCurrency(data.currentBalance)}
           </div>
           <p className="text-xs text-slate-400">
-            Base da rescisão + FGTS + reserva
+            Disponível em conta e aplicações
           </p>
         </div>
 
@@ -160,11 +169,11 @@ export function OverviewTab({
           </p>
         </div>
 
-        {/* Card 4: Entradas Mensais (Seguro + CDI) */}
+        {/* Card 4: Entradas Mensais (Rendimentos + Recebíveis) */}
         <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5 space-y-2">
           <div className="flex items-center justify-between text-slate-400 text-xs font-medium uppercase tracking-wider">
             <span>Entradas Recorrentes</span>
-            <span className="p-1 rounded bg-slate-800 text-cyan-400">Seguro + CDI</span>
+            <span className="p-1 rounded bg-slate-800 text-cyan-400">Renda + CDI</span>
           </div>
           <div className="text-2xl font-bold text-cyan-400">
             +{formatCurrency(forecast.totalMonthlyRecurringIncomes)}
@@ -172,6 +181,67 @@ export function OverviewTab({
           <p className="text-xs text-slate-400">
             A receber este mês: +{formatCurrency(forecast.remainingRecurringIncomes)}
           </p>
+        </div>
+      </div>
+
+      {/* MELHORIA 3: Card Informativo do Rendimento Passivo Estimado do Saldo (100% CDI) */}
+      <div className="bg-gradient-to-br from-slate-900 via-emerald-950/20 to-slate-900 border border-emerald-500/30 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="space-y-3">
+            <div className="flex items-center space-x-2 text-emerald-400 font-semibold text-xs uppercase tracking-wider">
+              <Coins className="w-4 h-4 text-emerald-400" />
+              <span>Reserva Ativa • Rendimento Passivo Estimado (100% CDI ~10.75% a.a.)</span>
+            </div>
+
+            <div>
+              <div className="flex items-baseline space-x-2">
+                <span className="text-3xl font-black text-emerald-400">
+                  +{formatCurrency(forecast.cdiYield?.monthlyNetYield || 0)}
+                </span>
+                <span className="text-sm font-medium text-slate-300">/mês de renda passiva limpa</span>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed mt-1">
+                Seu patrimônio disponível ({formatCurrency(data.currentBalance)}) investido a 100% do CDI rende aproximadamente <strong className="text-emerald-400 font-semibold">+{formatCurrency(forecast.cdiYield?.dailyNetYield || 0)}/dia</strong> pingando silenciosamente na conta, compensando a inflação e amortecendo sua queima de caixa.
+              </p>
+            </div>
+
+            {/* Metrics Chips */}
+            <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+              <span className="px-3 py-1 rounded-xl bg-slate-800/80 border border-slate-700/80 text-slate-200 flex items-center space-x-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                <span>Rendimento anual reinvestido: <strong className="text-emerald-300 font-semibold">+{formatCurrency(forecast.cdiYield?.annualNetYield || 0)}</strong></span>
+              </span>
+
+              {forecast.runwayGainMonths > 0 && (
+                <span className="px-3 py-1 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 font-semibold flex items-center space-x-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>+{forecast.runwayGainMonths} meses de fôlego extra gerados exclusivamente pelos juros</span>
+                </span>
+              )}
+
+              {forecast.totalMonthlyRecurringExpenses > 0 && (
+                <span className="px-3 py-1 rounded-xl bg-indigo-950/50 border border-indigo-500/30 text-indigo-300 flex items-center space-x-1.5">
+                  <Percent className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>Cobre {Math.min(100, Math.round(((forecast.cdiYield?.monthlyNetYield || 0) / forecast.totalMonthlyRecurringExpenses) * 100))}% dos seus custos fixos</span>
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row lg:flex-col gap-2 shrink-0">
+            <button
+              onClick={onOpenScenarioModal}
+              className="px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold text-sm transition flex items-center justify-center space-x-2 shadow-lg shadow-emerald-600/25 cursor-pointer"
+            >
+              <Sparkles className="w-4 h-4 text-emerald-200" />
+              <span>Simular Cenários 'E Se?'</span>
+            </button>
+            <span className="text-[11px] text-center text-slate-400">
+              Stress test de renda, cortes e compras
+            </span>
+          </div>
         </div>
       </div>
 

@@ -161,7 +161,7 @@ export function RecurringTab({
           <div className="space-y-1">
             <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Total Entradas Recorrentes</span>
             <div className="text-2xl font-bold text-cyan-400">+{formatCurrency(totalMonthlyIncomes)}/mês</div>
-            <p className="text-xs text-slate-500">Seguro-Desemprego + Rendimento CDI</p>
+            <p className="text-xs text-slate-500">Salários, rendimentos e recebíveis</p>
           </div>
           <button
             onClick={handleOpenAddInc}
@@ -269,7 +269,7 @@ export function RecurringTab({
               <label className="text-xs text-slate-400 block mb-1">Descrição:</label>
               <input
                 type="text"
-                placeholder="Ex: Seguro-Desemprego, Rendimentos..."
+                placeholder="Ex: Salário, Rendimentos, Aluguel recebido..."
                 value={incDesc}
                 onChange={e => setIncDesc(e.target.value)}
                 className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-cyan-500"

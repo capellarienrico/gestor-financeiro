@@ -13,25 +13,35 @@ import {
   X,
   Sparkles,
   Flag,
-  RotateCcw
+  CreditCard
 } from 'lucide-react'
 import { formatCurrency } from '../utils/financialMath'
 import { getCategoryById } from '../utils/categories'
+import {
+  calculateCreditCardDueDate,
+  isCreditCardTransaction,
+  DEFAULT_CARD_SETTINGS
+} from '../utils/creditCardCycle'
 
 export function SpreadsheetTab({
   data,
   categories,
   incomeCategories,
+  creditCardSettings = DEFAULT_CARD_SETTINGS,
   onAddTransaction,
   onEditTransaction,
   onDeleteTransaction,
-  onUpdateStartingPoint
+  onUpdateStartingPoint,
+  onUpdateCreditCardSettings
 }) {
   const todayDate = new Date()
   const todayIso = todayDate.toISOString().substring(0, 10)
   
   const [selectedYear, setSelectedYear] = useState(todayDate.getFullYear())
   const [selectedMonth, setSelectedMonth] = useState(todayDate.getMonth())
+
+  // View Mode: 'purchase' (Data da Compra) vs 'settlement' (Data de Liquidação / Fatura)
+  const [viewMode, setViewMode] = useState('purchase')
 
   // Day Details / Breakdown Modal state
   const [selectedDayDetails, setSelectedDayDetails] = useState(null)
@@ -44,6 +54,7 @@ export function SpreadsheetTab({
   const [formDesc, setFormDesc] = useState('')
   const [formAmount, setFormAmount] = useState('')
   const [formCategory, setFormCategory] = useState('alimentacao')
+  const [formPaymentMethod, setFormPaymentMethod] = useState('pix')
 
   const dailyBudgetGoal = data.dailyBudgetGoal || 100
   const startingPoint = data.startingPoint || { date: todayIso, balance: data.currentBalance || 155000 }
@@ -75,8 +86,25 @@ export function SpreadsheetTab({
   const isCurrentActualMonth = todayDate.getFullYear() === selectedYear && todayDate.getMonth() === selectedMonth
   const todayNumber = todayDate.getDate()
 
-  // Filter transactions for this month
-  const monthTransactions = data.transactions.filter(t => t.date.startsWith(currentMonthKey))
+  // Map transactions to calculate credit card invoice due dates and effective date according to viewMode
+  const effectiveTransactions = (data.transactions || []).map(t => {
+    const isCard = isCreditCardTransaction(t)
+    const dueDate = isCard
+      ? calculateCreditCardDueDate(t.date, creditCardSettings?.closingDay || 15, creditCardSettings?.dueDay || 25)
+      : t.date
+
+    const effectiveDate = (viewMode === 'settlement' && isCard) ? dueDate : t.date
+
+    return {
+      ...t,
+      isCard,
+      calculatedDueDate: dueDate,
+      effectiveDate
+    }
+  })
+
+  // Filter transactions for this month based on effective date
+  const monthTransactions = effectiveTransactions.filter(t => t.effectiveDate.startsWith(currentMonthKey))
 
   // Open Quick Add for a specific day
   const handleOpenQuickAdd = (day, defaultType = 'expense') => {
@@ -86,6 +114,7 @@ export function SpreadsheetTab({
     setFormDesc('')
     setFormAmount('')
     setFormCategory(defaultType === 'expense' ? (categories[0]?.id || 'alimentacao') : (incomeCategories[0]?.id || 'salario'))
+    setFormPaymentMethod('pix')
     setModalOpen(true)
   }
 
@@ -97,6 +126,7 @@ export function SpreadsheetTab({
     setFormDesc(tx.description)
     setFormAmount(tx.amount.toString())
     setFormCategory(tx.category)
+    setFormPaymentMethod(isCreditCardTransaction(tx) ? 'credit_card' : (tx.paymentMethod || 'pix'))
     setModalOpen(true)
   }
 
@@ -106,6 +136,7 @@ export function SpreadsheetTab({
     if (!formDesc.trim() || isNaN(amt) || amt <= 0) return
 
     const dateStr = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(targetDay).padStart(2, '0')}`
+    const isCard = formPaymentMethod === 'credit_card'
 
     if (editingItem) {
       onEditTransaction({
@@ -114,7 +145,9 @@ export function SpreadsheetTab({
         description: formDesc.trim(),
         amount: amt,
         type: formType,
-        category: formCategory
+        category: formCategory,
+        paymentMethod: isCard ? 'Cartão de Crédito' : 'À Vista / Pix',
+        source: isCard ? 'Cartão de Crédito' : (editingItem.source || 'Planilha')
       })
     } else {
       onAddTransaction({
@@ -124,7 +157,8 @@ export function SpreadsheetTab({
         amount: amt,
         type: formType,
         category: formCategory,
-        source: 'Planilha'
+        paymentMethod: isCard ? 'Cartão de Crédito' : 'À Vista / Pix',
+        source: isCard ? 'Cartão de Crédito' : 'Planilha'
       })
     }
 
@@ -148,9 +182,10 @@ export function SpreadsheetTab({
     const isBeforeStartingDate = dateKey < startingPoint.date
     const isFromStartingDateOnwards = dateKey >= startingPoint.date
 
-    const dayTxs = monthTransactions.filter(t => t.date === dateKey)
+    const dayTxs = monthTransactions.filter(t => t.effectiveDate === dateKey)
     const dayIncomes = dayTxs.filter(t => t.type === 'income')
     const dayExpenses = dayTxs.filter(t => t.type === 'expense')
+    const hasCardExpense = dayExpenses.some(t => t.isCard)
 
     const dayRecurring = data.recurringExpenses.filter(r => r.dayOfMonth === day)
     const dayRecurringIn = data.recurringIncomes.filter(r => r.dayOfMonth === day)
@@ -197,6 +232,7 @@ export function SpreadsheetTab({
       isFromStartingDateOnwards,
       dayIncomes,
       dayExpenses,
+      hasCardExpense,
       dayRecurring,
       dayRecurringIn,
       sumIncomes,
@@ -325,6 +361,37 @@ export function SpreadsheetTab({
           </button>
         </div>
 
+        {/* View Mode Toggle: Data da Compra vs Data de Liquidação / Fatura */}
+        <div className="flex items-center bg-slate-950/80 border border-slate-800 rounded-xl p-1 shadow-inner">
+          <button
+            onClick={() => setViewMode('purchase')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition cursor-pointer ${
+              viewMode === 'purchase'
+                ? 'bg-emerald-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+            title="Exibe os gastos no dia em que a compra foi efetuada"
+          >
+            <Calendar className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Data da</span>
+            <span>Compra</span>
+          </button>
+
+          <button
+            onClick={() => setViewMode('settlement')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition cursor-pointer ${
+              viewMode === 'settlement'
+                ? 'bg-purple-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+            title="Exibe gastos no cartão no dia do vencimento da fatura (quando o dinheiro sai da conta)"
+          >
+            <CreditCard className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Data de</span>
+            <span>Liquidação (Fatura)</span>
+          </button>
+        </div>
+
         {/* Quick Actions */}
         <div className="flex items-center space-x-2">
           <button
@@ -337,6 +404,38 @@ export function SpreadsheetTab({
           </button>
         </div>
       </div>
+
+      {/* Banner explicativo do modo de visualização */}
+      {viewMode === 'settlement' ? (
+        <div className="p-3.5 rounded-2xl bg-gradient-to-r from-purple-950/40 via-purple-900/20 to-slate-900 border border-purple-500/30 text-xs text-purple-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shadow-lg">
+          <div className="flex items-center space-x-2">
+            <CreditCard className="w-4 h-4 text-purple-400 shrink-0" />
+            <span>
+              <strong>Visão por Data de Liquidação / Fatura Ativa:</strong> Compras feitas no Cartão de Crédito são contabilizadas no dia do vencimento (<strong className="text-white">dia {creditCardSettings?.dueDay || 25}</strong>), após o fechamento (<strong className="text-white">dia {creditCardSettings?.closingDay || 15}</strong>), para demonstrar a saída real de saldo.
+            </span>
+          </div>
+          <button
+            onClick={() => setViewMode('purchase')}
+            className="text-[11px] font-semibold text-purple-300 hover:text-white underline cursor-pointer shrink-0"
+          >
+            Voltar para Data da Compra
+          </button>
+        </div>
+      ) : (
+        <div className="px-4 py-2 rounded-xl bg-slate-900/50 border border-slate-800/80 text-[11px] text-slate-400 flex items-center justify-between">
+          <span className="flex items-center gap-1.5">
+            <Calendar className="w-3.5 h-3.5 text-slate-500" />
+            Visualizando por <strong>Data da Compra</strong>. Gastos no cartão exibem indicador da fatura prevista (<span className="text-purple-400 font-medium">d. {creditCardSettings?.dueDay || 25}</span>).
+          </span>
+          <button
+            onClick={() => setViewMode('settlement')}
+            className="text-purple-400 hover:text-purple-300 font-medium cursor-pointer ml-2 text-xs flex items-center gap-1"
+          >
+            <span>Ver quando o dinheiro sairá do saldo</span>
+            <span>&rarr;</span>
+          </button>
+        </div>
+      )}
 
       {/* Excel Spreadsheet Table */}
       <div className="bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
@@ -453,6 +552,15 @@ export function SpreadsheetTab({
                             </>
                           ) : (
                             <>
+                              {row.hasCardExpense && (
+                                <span
+                                  className="text-[10px] px-1.5 py-0.2 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20 font-sans flex items-center gap-1"
+                                  title={viewMode === 'settlement' ? 'Inclui gastos no cartão liquidados nesta data' : `Contém compras no cartão (Fatura d. ${creditCardSettings?.dueDay || 25})`}
+                                >
+                                  <CreditCard className="w-2.5 h-2.5" />
+                                  <span>d.{creditCardSettings?.dueDay || 25}</span>
+                                </span>
+                              )}
                               {row.dayExpenses.length > 1 && (
                                 <span className="text-[10px] px-1.5 py-0.2 rounded bg-rose-500/10 text-rose-400 font-sans border border-rose-500/20">
                                   {row.dayExpenses.length} gastos
@@ -619,10 +727,30 @@ export function SpreadsheetTab({
                           key={exp.id}
                           className="flex items-center justify-between p-2 rounded-lg bg-slate-900 hover:bg-slate-850 border border-slate-800 text-xs"
                         >
-                          <div className="flex items-center space-x-2">
-                            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }} />
-                            <span className="font-medium text-slate-200">{exp.description}</span>
-                            <span className="text-[10px] text-slate-500 font-sans">({cat.name})</span>
+                          <div className="flex flex-col space-y-0.5">
+                            <div className="flex items-center space-x-2">
+                              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }} />
+                              <span className="font-medium text-slate-200">{exp.description}</span>
+                              <span className="text-[10px] text-slate-500 font-sans">({cat.name})</span>
+                              {exp.isCard && (
+                                <span
+                                  className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 font-sans inline-flex items-center gap-1 font-medium"
+                                  title={`Fechamento: dia ${creditCardSettings?.closingDay || 15} • Vencimento: ${exp.calculatedDueDate?.split('-').reverse().join('/')}`}
+                                >
+                                  <CreditCard className="w-3 h-3 text-purple-400" />
+                                  <span>Fatura d. {creditCardSettings?.dueDay || 25}</span>
+                                </span>
+                              )}
+                            </div>
+                            {exp.isCard && (
+                              <div className="text-[10px] text-slate-400 pl-4">
+                                {viewMode === 'settlement' ? (
+                                  <span>Compra realizada em {exp.date.split('-').reverse().join('/')} &bull; Liquidada nesta fatura</span>
+                                ) : (
+                                  <span>Compra efetuada hoje &bull; Vencerá na fatura de <strong className="text-purple-300 font-mono">{exp.calculatedDueDate?.split('-').reverse().join('/')}</strong></span>
+                                )}
+                              </div>
+                            )}
                           </div>
 
                           <div className="flex items-center space-x-2">
@@ -849,6 +977,49 @@ export function SpreadsheetTab({
                   ))}
                 </select>
               </div>
+
+              {formType === 'expense' && (
+                <div>
+                  <label className="text-xs text-slate-400 block mb-1">Forma de Pagamento:</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setFormPaymentMethod('pix')}
+                      className={`py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center space-x-1 cursor-pointer transition ${
+                        formPaymentMethod !== 'credit_card'
+                          ? 'bg-slate-800 text-white border border-slate-700'
+                          : 'bg-slate-950 text-slate-400 hover:text-slate-300'
+                      }`}
+                    >
+                      <span>Pix / À Vista / Conta</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormPaymentMethod('credit_card')}
+                      className={`py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 cursor-pointer transition ${
+                        formPaymentMethod === 'credit_card'
+                          ? 'bg-purple-600/30 text-purple-300 border border-purple-500/50'
+                          : 'bg-slate-950 text-slate-400 hover:text-slate-300'
+                      }`}
+                    >
+                      <CreditCard className="w-3.5 h-3.5" />
+                      <span>Cartão de Crédito</span>
+                    </button>
+                  </div>
+
+                  {formPaymentMethod === 'credit_card' && (
+                    <div className="mt-2 p-2.5 rounded-xl bg-purple-950/30 border border-purple-500/20 text-xs text-purple-200 space-y-1">
+                      <div className="flex items-center justify-between font-medium">
+                        <span>Fechamento: <strong>dia {creditCardSettings?.closingDay || 15}</strong></span>
+                        <span>Vencimento: <strong>dia {creditCardSettings?.dueDay || 25}</strong></span>
+                      </div>
+                      <div className="text-[11px] text-slate-300 pt-0.5">
+                        • Previsão de débito no saldo: <strong className="text-purple-300 font-mono">{calculateCreditCardDueDate(`${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(targetDay).padStart(2, '0')}`, creditCardSettings?.closingDay || 15, creditCardSettings?.dueDay || 25).split('-').reverse().join('/')}</strong>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="flex items-center justify-between pt-2">
                 {editingItem ? (
