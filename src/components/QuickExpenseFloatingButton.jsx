@@ -21,6 +21,7 @@ const PRESETS = [
   { label: 'Mercado', icon: '🛒', amount: '150.00', category: 'alimentacao', desc: 'Mercado' },
   { label: 'Uber / Corrida', icon: '🚗', amount: '25.00', category: 'transporte', desc: 'Uber / Corrida' },
   { label: 'Farmácia', icon: '💊', amount: '40.00', category: 'saude', desc: 'Farmácia / Remédios' },
+  { label: 'Fatura Cartão', icon: '💳', amount: '', category: 'outros', desc: 'Fatura do Cartão de Crédito', paymentMethod: 'Cartão Crédito' },
   { label: 'Pix Avulso', icon: '⚡', amount: '', category: 'outros', desc: 'Pix Avulso', paymentMethod: 'Pix' }
 ]
 

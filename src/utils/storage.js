@@ -5,11 +5,11 @@ const STORAGE_KEY = 'gestor_financeiro_data_v1'
 const todayIso = new Date().toISOString().substring(0, 10)
 
 export const DEFAULT_DATA = {
-  currentBalance: 155000,
-  dailyBudgetGoal: 120,
+  currentBalance: 30000,
+  dailyBudgetGoal: 65,
   startingPoint: {
     date: todayIso,
-    balance: 155000
+    balance: 30000
   },
   creditCardSettings: {
     closingDay: 15,
@@ -22,7 +22,7 @@ export const DEFAULT_DATA = {
       id: 'tx-1',
       date: todayIso,
       description: 'Supermercado da semana',
-      amount: 285.50,
+      amount: 145.20,
       type: 'expense',
       category: 'alimentacao',
       source: 'Pix'
@@ -31,25 +31,25 @@ export const DEFAULT_DATA = {
       id: 'tx-2',
       date: todayIso,
       description: 'Farmácia',
-      amount: 45.90,
+      amount: 38.50,
       type: 'expense',
       category: 'saude',
-      source: 'Cartão'
+      source: 'Cartão de Crédito'
     }
   ],
   recurringExpenses: [
-    { id: 'rec-exp-1', description: 'Financiamento Imobiliário', amount: 3200, dayOfMonth: 10, category: 'moradia' },
-    { id: 'rec-exp-2', description: 'Condomínio', amount: 850, dayOfMonth: 5, category: 'moradia' },
-    { id: 'rec-exp-3', description: 'Energia Elétrica & Gás', amount: 280, dayOfMonth: 15, category: 'moradia' },
-    { id: 'rec-exp-4', description: 'Internet Fibra', amount: 130, dayOfMonth: 20, category: 'servicos' },
-    { id: 'rec-exp-5', description: 'Plano de Saúde / Seguro', amount: 650, dayOfMonth: 8, category: 'saude' },
-    { id: 'rec-exp-6', description: 'Assinaturas (Netflix, Spotify)', amount: 95, dayOfMonth: 12, category: 'lazer' },
+    { id: 'rec-exp-1', description: 'Aluguel', amount: 1500, dayOfMonth: 10, category: 'moradia' },
+    { id: 'rec-exp-2', description: 'Condomínio', amount: 350, dayOfMonth: 10, category: 'moradia' },
+    { id: 'rec-exp-3', description: 'Energia Elétrica', amount: 160, dayOfMonth: 15, category: 'moradia' },
+    { id: 'rec-exp-4', description: 'Internet Fibra', amount: 120, dayOfMonth: 20, category: 'servicos' },
+    { id: 'rec-exp-5', description: 'Plano de Saúde', amount: 380, dayOfMonth: 8, category: 'saude' },
+    { id: 'rec-exp-6', description: 'Streaming & Assinaturas', amount: 65, dayOfMonth: 12, category: 'lazer' },
   ],
   recurringIncomes: [
     {
       id: 'rec-inc-1',
-      description: 'Salário / Prestação de Serviço',
-      amount: 4500,
+      description: 'Salário / Entrada Mensal',
+      amount: 5000,
       dayOfMonth: 5,
       category: 'salario',
       totalInstallments: null,
@@ -57,8 +57,8 @@ export const DEFAULT_DATA = {
     },
     {
       id: 'rec-inc-2',
-      description: 'Rendimento Líquido Aplicações (100% CDI)',
-      amount: 1300,
+      description: 'Rendimento Reserva CDI',
+      amount: 250,
       dayOfMonth: 30,
       category: 'rendimentos',
       totalInstallments: null,
@@ -66,14 +66,14 @@ export const DEFAULT_DATA = {
     }
   ],
   budgets: {
-    moradia: 4500,
-    alimentacao: 2500,
-    transporte: 800,
-    saude: 800,
-    lazer: 400,
-    servicos: 300,
-    pessoal: 500,
-    outros: 400
+    moradia: 2200,
+    alimentacao: 1200,
+    transporte: 400,
+    saude: 500,
+    lazer: 300,
+    servicos: 200,
+    pessoal: 300,
+    outros: 200
   }
 }
 
@@ -82,9 +82,15 @@ export function loadFinancialData() {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw)
+      
+      // Auto-migrate from old 155k template to new realistic starter values (30k, 5k salary, 1.5k rent)
+      if (parsed.currentBalance === 155000 || parsed.startingPoint?.balance === 155000) {
+        return DEFAULT_DATA
+      }
+
       const startingPoint = parsed.startingPoint || {
         date: todayIso,
-        balance: parsed.currentBalance || 155000
+        balance: parsed.currentBalance || 30000
       }
 
       const creditCardSettings = parsed.creditCardSettings || {

@@ -56,8 +56,12 @@ export function SpreadsheetTab({
   const [formCategory, setFormCategory] = useState('alimentacao')
   const [formPaymentMethod, setFormPaymentMethod] = useState('pix')
 
-  const dailyBudgetGoal = data.dailyBudgetGoal || 100
-  const startingPoint = data.startingPoint || { date: todayIso, balance: data.currentBalance || 155000 }
+  // Credit Card Invoice Conciliator state
+  const [bankInvoiceInput, setBankInvoiceInput] = useState('')
+  const [showInvoiceConciliator, setShowInvoiceConciliator] = useState(false)
+
+  const dailyBudgetGoal = data.dailyBudgetGoal || 65
+  const startingPoint = data.startingPoint || { date: todayIso, balance: data.currentBalance || 30000 }
 
   // Month navigation
   const handlePrevMonth = () => {
@@ -105,6 +109,50 @@ export function SpreadsheetTab({
 
   // Filter transactions for this month based on effective date
   const monthTransactions = effectiveTransactions.filter(t => t.effectiveDate.startsWith(currentMonthKey))
+
+  // Credit Card Invoice Conciliator Calculations for active month
+  const invoiceDueDay = creditCardSettings?.dueDay || 25
+  const invoiceTargetDate = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(invoiceDueDay).padStart(2, '0')}`
+
+  const invoiceCardExpenses = (effectiveTransactions || []).filter(t => {
+    return t.type === 'expense' && isCreditCardTransaction(t) && t.calculatedDueDate === invoiceTargetDate
+  })
+  const invoiceCardTotal = invoiceCardExpenses.reduce((acc, t) => acc + t.amount, 0)
+  const parsedBankTotal = parseFloat(bankInvoiceInput.replace(',', '.')) || 0
+  const invoiceDiff = parsedBankTotal - invoiceCardTotal
+
+  const handleAddInvoiceAdjustment = () => {
+    if (invoiceDiff <= 0.01) return
+    onAddTransaction({
+      id: 'tx-card-adj-' + Date.now(),
+      date: invoiceTargetDate,
+      description: 'Ajuste de Fatura: Gastos não anotados no cartão',
+      amount: parseFloat(invoiceDiff.toFixed(2)),
+      type: 'expense',
+      category: 'outros',
+      source: 'Cartão de Crédito',
+      paymentMethod: 'credit_card'
+    })
+    setBankInvoiceInput('')
+    alert(`Ajuste de ${formatCurrency(invoiceDiff)} lançado com sucesso na fatura do dia ${invoiceDueDay}!`)
+  }
+
+  const handleDiscountInvoiceAdjustment = () => {
+    if (invoiceDiff >= -0.01) return
+    const diffAbs = Math.abs(invoiceDiff)
+    onAddTransaction({
+      id: 'tx-card-disc-' + Date.now(),
+      date: invoiceTargetDate,
+      description: 'Ajuste de Fatura: Desconto / Diferença de conciliação',
+      amount: parseFloat(diffAbs.toFixed(2)),
+      type: 'income',
+      category: 'outros_in',
+      source: 'Cartão de Crédito',
+      paymentMethod: 'credit_card'
+    })
+    setBankInvoiceInput('')
+    alert(`Ajuste redutor de ${formatCurrency(diffAbs)} aplicado com sucesso à fatura!`)
+  }
 
   // Open Quick Add for a specific day
   const handleOpenQuickAdd = (day, defaultType = 'expense') => {
@@ -436,6 +484,105 @@ export function SpreadsheetTab({
           </button>
         </div>
       )}
+
+      {/* Card / Gaveta de Conciliação de Fatura */}
+      <div className="bg-gradient-to-r from-slate-900 via-purple-950/20 to-slate-900 border border-purple-500/20 rounded-2xl p-4 shadow-lg space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center space-x-3">
+            <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shrink-0">
+              <CreditCard className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h4 className="font-bold text-white text-sm">Fatura do Cartão &bull; {capitalizedMonth}</h4>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20 font-medium">
+                  Vence dia {invoiceDueDay}
+                </span>
+              </div>
+              <p className="text-xs text-slate-400">
+                Anotado no App: <strong className="text-purple-300 font-mono">{formatCurrency(invoiceCardTotal)}</strong>
+                <span className="text-slate-500 ml-1.5">({invoiceCardExpenses.length} lançamentos no crédito)</span>
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setShowInvoiceConciliator(prev => !prev)}
+            className="px-3.5 py-2 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/30 text-purple-300 text-xs font-semibold flex items-center justify-center space-x-1.5 transition cursor-pointer self-start sm:self-auto"
+          >
+            <span>{showInvoiceConciliator ? 'Fechar Conciliador' : 'Bater com a Fatura do Banco'}</span>
+            <span className="text-[10px]">{showInvoiceConciliator ? '▲' : '▼'}</span>
+          </button>
+        </div>
+
+        {showInvoiceConciliator && (
+          <div className="pt-3 border-t border-purple-500/20 grid grid-cols-1 md:grid-cols-3 gap-4 items-end animate-in fade-in duration-150">
+            <div>
+              <label className="text-[11px] font-semibold text-slate-400 block mb-1">
+                Valor Real Fechado no Banco (ex: Nubank):
+              </label>
+              <div className="flex items-center space-x-2 bg-slate-950 border border-purple-500/30 rounded-xl px-3 py-2">
+                <span className="text-xs text-slate-500 font-mono">R$</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  inputMode="decimal"
+                  placeholder="Ex: 1850.00"
+                  value={bankInvoiceInput}
+                  onChange={e => setBankInvoiceInput(e.target.value)}
+                  className="w-full bg-transparent text-sm font-bold text-white placeholder-slate-600 focus:outline-none font-mono"
+                />
+              </div>
+            </div>
+
+            <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-2.5">
+              <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold block mb-0.5">Diferença / Esquecidos</span>
+              {parsedBankTotal > 0 ? (
+                <div className="flex items-center justify-between">
+                  <span className={`text-sm font-mono font-bold ${
+                    invoiceDiff > 0 ? 'text-amber-400' : invoiceDiff < 0 ? 'text-blue-400' : 'text-emerald-400'
+                  }`}>
+                    {invoiceDiff > 0 ? `+${formatCurrency(invoiceDiff)}` : formatCurrency(invoiceDiff)}
+                  </span>
+                  <span className="text-[10px] text-slate-400">
+                    {invoiceDiff > 0 ? 'não anotados' : invoiceDiff < 0 ? 'a mais no app' : '100% conciliado'}
+                  </span>
+                </div>
+              ) : (
+                <span className="text-xs text-slate-500">Digite o valor da fatura do banco</span>
+              )}
+            </div>
+
+            <div>
+              {invoiceDiff > 0.01 ? (
+                <button
+                  onClick={handleAddInvoiceAdjustment}
+                  className="w-full py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center space-x-1.5 transition shadow-lg shadow-amber-500/20 cursor-pointer"
+                  title="Gera um gasto avulso no dia do vencimento da fatura com a diferença"
+                >
+                  <span>+ Lançar {formatCurrency(invoiceDiff)} de Esquecidos</span>
+                </button>
+              ) : invoiceDiff < -0.01 ? (
+                <button
+                  onClick={handleDiscountInvoiceAdjustment}
+                  className="w-full py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center space-x-1.5 transition shadow-lg shadow-blue-600/20 cursor-pointer"
+                  title="Gera uma entrada redutora para bater com o valor real"
+                >
+                  <span>Ajustar Diferença (-{formatCurrency(Math.abs(invoiceDiff))})</span>
+                </button>
+              ) : parsedBankTotal > 0 ? (
+                <div className="py-2.5 text-center text-xs text-emerald-400 font-semibold bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                  ✓ Fatura 100% conciliada com o banco!
+                </div>
+              ) : (
+                <div className="text-[11px] text-slate-500 text-center py-2">
+                  Permite ajustar compras não anotadas sem precisar caçar cada comprovante.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Excel Spreadsheet Table */}
       <div className="bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
