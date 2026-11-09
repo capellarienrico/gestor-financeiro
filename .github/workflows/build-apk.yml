@@ -25,7 +25,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install Dependencies
@@ -44,20 +44,22 @@ jobs:
         run: |
           cd android
           ./gradlew assembleDebug --stacktrace
+          cp app/build/outputs/apk/debug/app-debug.apk ../GestorFinanceiro.apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Gestor-Financeiro-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: GestorFinanceiro.apk
           retention-days: 30
 
-      - name: Create GitHub Release with APK
-        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+      - name: Create or Update GitHub Release with APK
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          files: android/app/build/outputs/apk/debug/app-debug.apk
-          name: Gestor Financeiro APK
-          body: "Instale o arquivo `app-debug.apk` no seu celular Android."
+          tag_name: v1.0.0
+          name: Gestor Financeiro v1.0.0
+          body: "### 📱 Gestor Financeiro - Android APK\n\nBaixe o arquivo **GestorFinanceiro.apk** abaixo e instale no seu celular Android.\n\n- Projeção de gastos e saldo cumulativo\n- Lançamentos diários e recorrentes\n- Simulador de teto diário\n- Importação de extrato Nubank"
+          files: GestorFinanceiro.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
