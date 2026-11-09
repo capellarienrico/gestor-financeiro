@@ -9,27 +9,31 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
   Download,
-  FileSpreadsheet
+  FileSpreadsheet,
+  X,
+  ExternalLink
 } from 'lucide-react'
 import { formatCurrency } from '../utils/financialMath'
 import { getCategoryById } from '../utils/categories'
 
 export function SpreadsheetTab({
   data,
+  categories,
+  incomeCategories,
   onAddTransaction,
   onEditTransaction,
-  onDeleteTransaction,
-  categories,
-  incomeCategories
+  onDeleteTransaction
 }) {
-  // Current displayed month state (defaults to today's month)
   const todayDate = new Date()
   const [selectedYear, setSelectedYear] = useState(todayDate.getFullYear())
-  const [selectedMonth, setSelectedMonth] = useState(todayDate.getMonth()) // 0-indexed
+  const [selectedMonth, setSelectedMonth] = useState(todayDate.getMonth())
 
-  // Quick Add / Edit Modal for a specific day
+  // Day Details / Breakdown Modal state
+  const [selectedDayDetails, setSelectedDayDetails] = useState(null) // day number
+
+  // Add / Edit Transaction Form Modal state
   const [modalOpen, setModalOpen] = useState(false)
-  const [editingItem, setEditingItem] = useState(null) // null = new, object = edit
+  const [editingItem, setEditingItem] = useState(null)
   const [targetDay, setTargetDay] = useState(todayDate.getDate())
   const [formType, setFormType] = useState('expense')
   const [formDesc, setFormDesc] = useState('')
@@ -138,11 +142,7 @@ export function SpreadsheetTab({
 
       runningBalance = runningBalance + totalIn - totalExp - totalRec
 
-      const inDesc = dayIncomes.map(i => `${i.description} (${i.amount})`).join('; ')
-      const expDesc = dayExpenses.map(e => `${e.amount}`).join(' + ')
-      const recDesc = dayRecurring.map(r => `${r.description} (${r.amount})`).join('; ')
-
-      csv += `"${day}","${inDesc}","${expDesc}","${recDesc}","${runningBalance.toFixed(2)}"\n`
+      csv += `"${day}","${totalIn}","${totalExp}","${totalRec}","${runningBalance.toFixed(2)}"\n`
     }
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
@@ -156,8 +156,6 @@ export function SpreadsheetTab({
 
   // Calculate day-by-day rows
   let runningBalance = data.currentBalance
-  // Adjust starting balance so that by today it matches currentBalance
-  // Or compute running balance progressively
   let monthTotalIn = 0
   let monthTotalExp = 0
   let monthTotalRec = 0
@@ -169,14 +167,11 @@ export function SpreadsheetTab({
     const dayDate = new Date(selectedYear, selectedMonth, day)
     const weekDay = dayDate.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '')
 
-    // Transactions for this day
     const dayTxs = monthTransactions.filter(t => t.date === dateKey)
     const dayIncomes = dayTxs.filter(t => t.type === 'income')
     const dayExpenses = dayTxs.filter(t => t.type === 'expense')
 
-    // Recurring expenses on this day
     const dayRecurring = data.recurringExpenses.filter(r => r.dayOfMonth === day)
-    // Recurring incomes on this day
     const dayRecurringIn = data.recurringIncomes.filter(r => r.dayOfMonth === day)
 
     const sumIncomes = dayIncomes.reduce((s, t) => s + t.amount, 0) + dayRecurringIn.reduce((s, r) => s + r.amount, 0)
@@ -206,6 +201,9 @@ export function SpreadsheetTab({
     })
   }
 
+  // Selected Day Details Object
+  const activeDayRow = selectedDayDetails ? rows.find(r => r.day === selectedDayDetails) : null
+
   return (
     <div className="space-y-6">
       {/* Top Header & Month Controller */}
@@ -219,7 +217,7 @@ export function SpreadsheetTab({
               <span>Planilha Mensal de Gastos & Entradas</span>
             </h2>
             <p className="text-xs text-slate-400">
-              Visualização diária em formato de planilha (estilo Excel), com cálculo de saldo cumulativo.
+              Células com valores consolidados no estilo Excel. Clique em qualquer célula para ver a soma e detalhamento do dia.
             </p>
           </div>
         </div>
@@ -265,7 +263,7 @@ export function SpreadsheetTab({
       <div className="bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse font-sans text-xs">
-            {/* Super Header com o Mês (estilo o print) */}
+            {/* Header com o Mês centralizado */}
             <thead>
               <tr className="bg-slate-950 border-b border-slate-800">
                 <th
@@ -276,34 +274,38 @@ export function SpreadsheetTab({
                 </th>
               </tr>
               <tr className="bg-slate-950/80 border-b border-slate-700 text-slate-300 uppercase tracking-wider font-semibold text-[11px]">
-                <th className="py-3 px-3 text-center w-16 border-r border-slate-800">Dia</th>
-                <th className="py-3 px-4 w-1/4 border-r border-slate-800">Entrada</th>
-                <th className="py-3 px-4 w-1/3 border-r border-slate-800">Gastos diários</th>
-                <th className="py-3 px-4 w-1/4 border-r border-slate-800">Saídas recorrentes</th>
+                <th className="py-3 px-3 text-center w-20 border-r border-slate-800">Dia</th>
+                <th className="py-3 px-4 w-1/4 border-r border-slate-800 text-right">Entrada</th>
+                <th className="py-3 px-4 w-1/4 border-r border-slate-800 text-right">Gastos diários</th>
+                <th className="py-3 px-4 w-1/4 border-r border-slate-800 text-right">Saídas recorrentes</th>
                 <th className="py-3 px-4 text-right w-36">Saldo</th>
               </tr>
             </thead>
 
             <tbody className="divide-y divide-slate-800/80 font-mono">
               {rows.map((row) => {
-                const hasIncomes = row.dayIncomes.length > 0 || row.dayRecurringIn.length > 0
-                const hasExpenses = row.dayExpenses.length > 0
-                const hasRecurring = row.dayRecurring.length > 0
+                const hasIncomes = row.sumIncomes > 0
+                const hasExpenses = row.sumExpenses > 0
+                const hasRecurring = row.sumRecurring > 0
 
                 return (
                   <tr
                     key={row.day}
                     className={`transition group ${
                       row.isToday
-                        ? 'bg-indigo-950/30 ring-1 ring-inset ring-indigo-500/40'
+                        ? 'bg-indigo-950/40 ring-1 ring-inset ring-indigo-500/40'
                         : row.isWeekend
-                        ? 'bg-slate-950/40 hover:bg-slate-800/40'
+                        ? 'bg-slate-950/30 hover:bg-slate-800/40'
                         : 'hover:bg-slate-800/30'
                     }`}
                   >
                     {/* Coluna 1: Dia */}
-                    <td className="py-2.5 px-2 text-center border-r border-slate-800 font-bold whitespace-nowrap">
-                      <div className="flex items-center justify-center space-x-1">
+                    <td
+                      onClick={() => setSelectedDayDetails(row.day)}
+                      className="py-2.5 px-3 text-center border-r border-slate-800 font-bold whitespace-nowrap cursor-pointer hover:bg-slate-800/50"
+                      title="Clique para ver os lançamentos deste dia"
+                    >
+                      <div className="flex items-center justify-center space-x-1.5">
                         <span className={`inline-block px-1.5 py-0.5 rounded text-xs ${
                           row.isToday
                             ? 'bg-emerald-500 text-slate-950 font-black shadow-md'
@@ -317,105 +319,77 @@ export function SpreadsheetTab({
                       </div>
                     </td>
 
-                    {/* Coluna 2: Entrada */}
-                    <td className="py-2 px-3 border-r border-slate-800 relative group/cell">
-                      <div className="flex flex-wrap items-center gap-1.5 min-h-[26px]">
-                        {/* Lançamentos manuais de entrada */}
-                        {row.dayIncomes.map((inc) => (
-                          <div
-                            key={inc.id}
-                            onClick={() => handleOpenEdit(inc)}
-                            className="inline-flex items-center space-x-1 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 cursor-pointer transition text-[11px]"
-                            title="Clique para editar"
-                          >
-                            <span className="font-sans font-medium">{inc.description}</span>
-                            <span className="font-bold font-mono">({formatCurrency(inc.amount)})</span>
-                          </div>
-                        ))}
-
-                        {/* Entradas recorrentes que caem neste dia */}
-                        {row.dayRecurringIn.map((rIn) => (
-                          <div
-                            key={rIn.id}
-                            className="inline-flex items-center space-x-1 px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-[11px]"
-                            title="Entrada Recorrente agendada"
-                          >
-                            <span className="font-sans font-medium">{rIn.description}</span>
-                            <span className="font-bold font-mono">({formatCurrency(rIn.amount)})</span>
-                          </div>
-                        ))}
-
-                        {/* Botão de adicionar entrada rápida */}
-                        <button
-                          onClick={() => handleOpenQuickAdd(row.day, 'income')}
-                          className="opacity-0 group-hover/cell:opacity-100 p-0.5 rounded bg-slate-800 hover:bg-emerald-600 hover:text-white text-slate-400 transition cursor-pointer"
-                          title={`Adicionar entrada no dia ${row.day}`}
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                    {/* Coluna 2: Entrada (Apenas Consolidado) */}
+                    <td
+                      onClick={() => setSelectedDayDetails(row.day)}
+                      className="py-2.5 px-4 border-r border-slate-800 text-right cursor-pointer hover:bg-emerald-500/5 transition group/cell"
+                      title="Clique para ver a soma e detalhes das entradas"
+                    >
+                      {hasIncomes ? (
+                        <div className="flex items-center justify-end space-x-1.5">
+                          {row.dayIncomes.length > 1 && (
+                            <span className="text-[10px] px-1 py-0.2 rounded bg-emerald-500/10 text-emerald-400 font-sans border border-emerald-500/20">
+                              {row.dayIncomes.length} itens
+                            </span>
+                          )}
+                          <span className="font-semibold text-emerald-400">
+                            +{formatCurrency(row.sumIncomes)}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-slate-600 font-sans">—</span>
+                      )}
                     </td>
 
-                    {/* Coluna 3: Gastos Diários (Fórmula ex: 30 + 40 + 20 + 10) */}
-                    <td className="py-2 px-3 border-r border-slate-800 relative group/cell">
-                      <div className="flex flex-wrap items-center gap-1.5 min-h-[26px]">
-                        {hasExpenses ? (
-                          <div className="flex flex-wrap items-center gap-1 text-[11px]">
-                            {/* Render cada gasto com possibilidade de clique para editar */}
-                            {row.dayExpenses.map((exp, idx) => (
-                              <React.Fragment key={exp.id}>
-                                <button
-                                  onClick={() => handleOpenEdit(exp)}
-                                  className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80 cursor-pointer transition font-mono"
-                                  title={`${exp.description} - Clique para editar`}
-                                >
-                                  <span className="font-semibold text-rose-400">{exp.amount}</span>
-                                  <span className="text-[10px] text-slate-400 font-sans truncate max-w-[80px]">
-                                    ({exp.description})
-                                  </span>
-                                </button>
-                                {idx < row.dayExpenses.length - 1 && (
-                                  <span className="text-slate-500 font-bold font-mono">+</span>
-                                )}
-                              </React.Fragment>
-                            ))}
-                            {row.dayExpenses.length > 1 && (
-                              <span className="font-bold text-rose-400 ml-1 font-mono">
-                                = {formatCurrency(row.sumExpenses)}
-                              </span>
-                            )}
-                          </div>
-                        ) : null}
-
-                        {/* Botão de adicionar gasto rápido */}
-                        <button
-                          onClick={() => handleOpenQuickAdd(row.day, 'expense')}
-                          className="opacity-0 group-hover/cell:opacity-100 p-0.5 rounded bg-slate-800 hover:bg-rose-600 hover:text-white text-slate-400 transition cursor-pointer"
-                          title={`Adicionar gasto no dia ${row.day}`}
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                    {/* Coluna 3: Gastos diários (Apenas Consolidado) */}
+                    <td
+                      onClick={() => setSelectedDayDetails(row.day)}
+                      className="py-2.5 px-4 border-r border-slate-800 text-right cursor-pointer hover:bg-rose-500/5 transition group/cell"
+                      title="Clique para ver a soma de cada gasto deste dia"
+                    >
+                      {hasExpenses ? (
+                        <div className="flex items-center justify-end space-x-1.5">
+                          {row.dayExpenses.length > 1 && (
+                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-rose-500/10 text-rose-400 font-sans border border-rose-500/20">
+                              {row.dayExpenses.length} gastos
+                            </span>
+                          )}
+                          <span className="font-semibold text-rose-400">
+                            -{formatCurrency(row.sumExpenses)}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-slate-600 font-sans">—</span>
+                      )}
                     </td>
 
-                    {/* Coluna 4: Saídas Recorrentes (e.g. conta de luz) */}
-                    <td className="py-2 px-3 border-r border-slate-800">
-                      <div className="flex flex-wrap items-center gap-1.5 min-h-[26px]">
-                        {row.dayRecurring.map((rec) => (
-                          <div
-                            key={rec.id}
-                            className="inline-flex items-center space-x-1 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[11px]"
-                            title={`Contas fixa agendada dia ${rec.dayOfMonth}`}
-                          >
-                            <span className="font-sans font-medium">{rec.description}</span>
-                            <span className="font-bold font-mono">({formatCurrency(rec.amount)})</span>
-                          </div>
-                        ))}
-                      </div>
+                    {/* Coluna 4: Saídas recorrentes (Apenas Consolidado) */}
+                    <td
+                      onClick={() => setSelectedDayDetails(row.day)}
+                      className="py-2.5 px-4 border-r border-slate-800 text-right cursor-pointer hover:bg-amber-500/5 transition group/cell"
+                      title="Clique para ver as contas fixas agendadas deste dia"
+                    >
+                      {hasRecurring ? (
+                        <div className="flex items-center justify-end space-x-1.5">
+                          {row.dayRecurring.length > 1 && (
+                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-400 font-sans border border-amber-500/20">
+                              {row.dayRecurring.length} contas
+                            </span>
+                          )}
+                          <span className="font-semibold text-amber-400">
+                            -{formatCurrency(row.sumRecurring)}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-slate-600 font-sans">—</span>
+                      )}
                     </td>
 
                     {/* Coluna 5: Saldo */}
-                    <td className="py-2 px-4 text-right font-bold text-slate-200 font-mono whitespace-nowrap">
+                    <td
+                      onClick={() => setSelectedDayDetails(row.day)}
+                      className="py-2.5 px-4 text-right font-bold font-mono whitespace-nowrap cursor-pointer hover:bg-slate-800/40"
+                    >
                       <span className={row.saldo >= 0 ? 'text-slate-100' : 'text-rose-400'}>
                         {formatCurrency(row.saldo)}
                       </span>
@@ -431,13 +405,13 @@ export function SpreadsheetTab({
                 <td className="py-3 px-3 text-center border-r border-slate-800 uppercase font-sans">
                   Total
                 </td>
-                <td className="py-3 px-4 border-r border-slate-800 text-emerald-400 font-mono">
+                <td className="py-3 px-4 border-r border-slate-800 text-right text-emerald-400 font-mono">
                   +{formatCurrency(monthTotalIn)}
                 </td>
-                <td className="py-3 px-4 border-r border-slate-800 text-rose-400 font-mono">
+                <td className="py-3 px-4 border-r border-slate-800 text-right text-rose-400 font-mono">
                   -{formatCurrency(monthTotalExp)}
                 </td>
-                <td className="py-3 px-4 border-r border-slate-800 text-amber-400 font-mono">
+                <td className="py-3 px-4 border-r border-slate-800 text-right text-amber-400 font-mono">
                   -{formatCurrency(monthTotalRec)}
                 </td>
                 <td className="py-3 px-4 text-right text-emerald-400 font-mono text-sm">
@@ -449,7 +423,223 @@ export function SpreadsheetTab({
         </div>
       </div>
 
-      {/* Modal para Adicionar / Editar Lançamento da Planilha */}
+      {/* MODAL DETALHE DO DIA (Aparece ao clicar em qualquer célula do dia) */}
+      {activeDayRow && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl space-y-5 p-6 animate-in fade-in zoom-in-95 duration-150">
+            {/* Header do Dia */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center font-bold text-base font-mono">
+                  {activeDayRow.day}
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white flex items-center space-x-2">
+                    <span>Detalhamento do Dia {activeDayRow.day} de {capitalizedMonth}</span>
+                    <span className="text-xs font-normal text-slate-400 uppercase">({activeDayRow.weekDay})</span>
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Saldo ao fim deste dia: <strong className="text-emerald-400 font-mono">{formatCurrency(activeDayRow.saldo)}</strong>
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedDayDetails(null)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* SEÇÃO 1: Gastos Diários (com a soma no estilo 30 + 40 + 20 = 90) */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-rose-400 uppercase tracking-wider flex items-center space-x-1">
+                  <span>Gastos Diários:</span>
+                  <span className="font-mono font-bold">-{formatCurrency(activeDayRow.sumExpenses)}</span>
+                </span>
+                <button
+                  onClick={() => {
+                    handleOpenQuickAdd(activeDayRow.day, 'expense')
+                  }}
+                  className="px-2 py-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold flex items-center space-x-1 transition cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Adicionar Gasto</span>
+                </button>
+              </div>
+
+              {activeDayRow.dayExpenses.length > 0 ? (
+                <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2">
+                  {/* Fórmula Visual somada */}
+                  <div className="text-xs font-mono text-slate-300 pb-2 border-b border-slate-800/80 flex flex-wrap items-center gap-1">
+                    <span className="text-slate-500 font-sans text-[11px]">Soma do dia:</span>
+                    {activeDayRow.dayExpenses.map((exp, idx) => (
+                      <React.Fragment key={exp.id}>
+                        <span className="font-bold text-rose-400">{formatCurrency(exp.amount)}</span>
+                        {idx < activeDayRow.dayExpenses.length - 1 && (
+                          <span className="text-slate-500 font-bold">+</span>
+                        )}
+                      </React.Fragment>
+                    ))}
+                    <span className="text-slate-500 font-bold">=</span>
+                    <span className="font-bold text-rose-400 underline">{formatCurrency(activeDayRow.sumExpenses)}</span>
+                  </div>
+
+                  {/* Lista de itens para edição rápida */}
+                  <div className="space-y-1.5 pt-1">
+                    {activeDayRow.dayExpenses.map((exp) => {
+                      const cat = getCategoryById(exp.category, 'expense', categories)
+                      return (
+                        <div
+                          key={exp.id}
+                          className="flex items-center justify-between p-2 rounded-lg bg-slate-900 hover:bg-slate-850 border border-slate-800 text-xs"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }} />
+                            <span className="font-medium text-slate-200">{exp.description}</span>
+                            <span className="text-[10px] text-slate-500 font-sans">({cat.name})</span>
+                          </div>
+
+                          <div className="flex items-center space-x-2">
+                            <span className="font-bold font-mono text-rose-400">-{formatCurrency(exp.amount)}</span>
+                            <button
+                              onClick={() => handleOpenEdit(exp)}
+                              className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+                              title="Editar gasto"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm('Excluir este gasto?')) {
+                                  onDeleteTransaction(exp.id)
+                                }
+                              }}
+                              className="p-1 rounded text-slate-500 hover:text-rose-400 transition cursor-pointer"
+                              title="Excluir"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="p-3 rounded-xl bg-slate-950/40 border border-slate-800/60 text-center text-xs text-slate-500">
+                  Nenhum gasto diário registrado neste dia.
+                </div>
+              )}
+            </div>
+
+            {/* SEÇÃO 2: Entradas do Dia */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider flex items-center space-x-1">
+                  <span>Entradas:</span>
+                  <span className="font-mono font-bold">+{formatCurrency(activeDayRow.sumIncomes)}</span>
+                </span>
+                <button
+                  onClick={() => {
+                    handleOpenQuickAdd(activeDayRow.day, 'income')
+                  }}
+                  className="px-2 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-semibold flex items-center space-x-1 transition cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Adicionar Entrada</span>
+                </button>
+              </div>
+
+              {activeDayRow.dayIncomes.length > 0 || activeDayRow.dayRecurringIn.length > 0 ? (
+                <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1.5">
+                  {/* Lançamentos normais de entrada */}
+                  {activeDayRow.dayIncomes.map((inc) => (
+                    <div
+                      key={inc.id}
+                      className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800 text-xs"
+                    >
+                      <div className="space-y-0.5">
+                        <span className="font-medium text-slate-200 block">{inc.description}</span>
+                        <span className="text-[10px] text-slate-500">{inc.source || 'Entrada manual'}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-bold font-mono text-emerald-400">+{formatCurrency(inc.amount)}</span>
+                        <button
+                          onClick={() => handleOpenEdit(inc)}
+                          className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm('Excluir esta entrada?')) {
+                              onDeleteTransaction(inc.id)
+                            }
+                          }}
+                          className="p-1 rounded text-slate-500 hover:text-rose-400 transition cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Entradas recorrentes */}
+                  {activeDayRow.dayRecurringIn.map((rIn) => (
+                    <div
+                      key={rIn.id}
+                      className="flex items-center justify-between p-2 rounded-lg bg-cyan-950/20 border border-cyan-500/20 text-xs"
+                    >
+                      <div>
+                        <span className="font-medium text-cyan-300 block">{rIn.description}</span>
+                        <span className="text-[10px] text-cyan-400">Entrada Recorrente agendada</span>
+                      </div>
+                      <span className="font-bold font-mono text-cyan-400">+{formatCurrency(rIn.amount)}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-3 rounded-xl bg-slate-950/40 border border-slate-800/60 text-center text-xs text-slate-500">
+                  Nenhuma entrada registrada neste dia.
+                </div>
+              )}
+            </div>
+
+            {/* SEÇÃO 3: Saídas Recorrentes (Contas Fixas do dia) */}
+            {activeDayRow.dayRecurring.length > 0 && (
+              <div className="space-y-2">
+                <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider block">
+                  Contas Fixas que vencem neste dia:
+                </span>
+                <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1.5">
+                  {activeDayRow.dayRecurring.map((rec) => (
+                    <div
+                      key={rec.id}
+                      className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800 text-xs"
+                    >
+                      <span className="font-medium text-slate-200">{rec.description}</span>
+                      <span className="font-bold font-mono text-amber-400">-{formatCurrency(rec.amount)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="pt-2 flex justify-end">
+              <button
+                onClick={() => setSelectedDayDetails(null)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition cursor-pointer"
+              >
+                Fechar Detalhes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL ADICIONAR / EDITAR TRANSAÇÃO */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl p-6 space-y-4">
@@ -457,10 +647,7 @@ export function SpreadsheetTab({
               <h3 className="text-base font-bold text-white flex items-center space-x-2">
                 <span>{editingItem ? 'Editar Lançamento' : `Novo Lançamento - Dia ${targetDay} de ${capitalizedMonth}`}</span>
               </h3>
-              <button
-                onClick={() => setModalOpen(false)}
-                className="text-slate-400 hover:text-white cursor-pointer"
-              >
+              <button onClick={() => setModalOpen(false)} className="text-slate-400 hover:text-white cursor-pointer">
                 ✕
               </button>
             </div>
@@ -513,7 +700,7 @@ export function SpreadsheetTab({
                 <label className="text-xs text-slate-400 block mb-1">Descrição:</label>
                 <input
                   type="text"
-                  placeholder="Ex: Almoço, Uber, Salário, Freelance..."
+                  placeholder="Ex: Almoço, Farmácia, Uber, Salário..."
                   value={formDesc}
                   onChange={e => setFormDesc(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
