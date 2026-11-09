@@ -1,0 +1,9 @@
+{
+  "appId": "com.capellarienrico.gestorfinanceiro",
+  "appName": "Gestor Financeiro",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}
