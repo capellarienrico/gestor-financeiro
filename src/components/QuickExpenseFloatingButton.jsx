@@ -157,9 +157,9 @@ export function QuickExpenseFloatingButton({
   return (
     <>
       {/* Floating Action Button (FAB) */}
-      <div className="fixed bottom-6 right-6 z-40 flex items-center space-x-3">
+      <div className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center space-x-3">
         {toastMessage && (
-          <div className="bg-emerald-600 text-white px-4 py-2.5 rounded-2xl shadow-2xl flex items-center space-x-2 text-xs font-semibold animate-bounce border border-emerald-400/40">
+          <div className="bg-emerald-600 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl shadow-2xl flex items-center space-x-2 text-xs font-semibold animate-bounce border border-emerald-400/40">
             <Check className="w-4 h-4" />
             <span>{toastMessage}</span>
           </div>
@@ -167,13 +167,13 @@ export function QuickExpenseFloatingButton({
 
         <button
           onClick={() => setIsOpen(true)}
-          className="group relative flex items-center space-x-2.5 px-4 sm:px-5 py-3.5 rounded-full bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 text-white font-bold text-sm shadow-xl shadow-emerald-500/30 hover:shadow-2xl hover:shadow-emerald-500/50 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer border border-emerald-400/40"
+          className="group relative flex items-center space-x-2 px-4 sm:px-5 py-3 sm:py-3.5 rounded-full bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 text-white font-bold text-sm shadow-xl shadow-emerald-500/30 hover:shadow-2xl hover:shadow-emerald-500/50 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer border border-emerald-400/40"
           title="Lançamento Rápido em 1 Toque (Atalho: Tecla N)"
         >
           <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
             <Plus className="w-4 h-4 text-white group-hover:rotate-90 transition-transform duration-300" />
           </div>
-          <span className="tracking-wide">+ Gasto Rápido</span>
+          <span className="tracking-wide text-xs sm:text-sm">+ Gasto Rápido</span>
           <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-950/60 text-emerald-200 border border-emerald-400/30">
             N
           </span>
@@ -190,9 +190,12 @@ export function QuickExpenseFloatingButton({
           />
 
           {/* Modal Container */}
-          <div className="relative z-10 w-full max-w-lg bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+          <div className="relative z-10 w-full max-w-lg bg-slate-900 border-t sm:border border-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[88vh] sm:max-h-[92vh] pb-safe">
+            {/* Mobile Drag Handle */}
+            <div className="w-10 h-1 rounded-full bg-slate-700 mx-auto mt-2 sm:hidden shrink-0" />
+
             {/* Header */}
-            <div className="p-5 border-b border-slate-800/80 flex items-center justify-between bg-slate-900/80">
+            <div className="p-4 sm:p-5 border-b border-slate-800/80 flex items-center justify-between bg-slate-900/80">
               <div className="flex items-center space-x-3">
                 <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
                   <Zap className="w-5 h-5" />
@@ -283,6 +286,8 @@ export function QuickExpenseFloatingButton({
                     ref={amountInputRef}
                     type="number"
                     step="0.01"
+                    inputMode="decimal"
+                    enterKeyHint="done"
                     placeholder="0,00"
                     value={amount}
                     onChange={e => setAmount(e.target.value)}

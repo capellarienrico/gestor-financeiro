@@ -81,8 +81,11 @@ export function NubankImportModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-3xl overflow-hidden shadow-2xl space-y-6 my-8 animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-slate-900 border-t sm:border border-slate-800 rounded-t-3xl sm:rounded-3xl w-full max-w-3xl overflow-hidden shadow-2xl space-y-4 sm:space-y-6 sm:my-8 max-h-[90vh] pb-safe animate-in fade-in zoom-in-95 duration-150">
+        {/* Mobile Drag Handle */}
+        <div className="w-10 h-1 rounded-full bg-slate-700 mx-auto mt-2 sm:hidden shrink-0" />
+
         {/* Modal Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-800 bg-slate-950/50">
           <div className="flex items-center space-x-3">

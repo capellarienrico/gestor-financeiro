@@ -452,11 +452,11 @@ export function SpreadsheetTab({
                 </th>
               </tr>
               <tr className="bg-slate-950/80 border-b border-slate-700 text-slate-300 uppercase tracking-wider font-semibold text-[11px]">
-                <th className="py-3 px-3 text-center w-24 border-r border-slate-800">Dia</th>
-                <th className="py-3 px-4 w-1/4 border-r border-slate-800 text-right">Entrada</th>
-                <th className="py-3 px-4 w-1/4 border-r border-slate-800 text-right">Gastos diários</th>
-                <th className="py-3 px-4 w-1/4 border-r border-slate-800 text-right">Saídas recorrentes</th>
-                <th className="py-3 px-4 text-right w-36">Saldo</th>
+                <th className="sticky left-0 bg-slate-950 py-3 px-3 text-center w-24 border-r border-slate-800 z-20 shadow-[2px_0_6px_rgba(0,0,0,0.5)]">Dia</th>
+                <th className="py-3 px-4 w-1/4 border-r border-slate-800 text-right min-w-[130px]">Entrada</th>
+                <th className="py-3 px-4 w-1/4 border-r border-slate-800 text-right min-w-[140px]">Gastos diários</th>
+                <th className="py-3 px-4 w-1/4 border-r border-slate-800 text-right min-w-[150px]">Saídas recorrentes</th>
+                <th className="py-3 px-4 text-right w-36 min-w-[130px]">Saldo</th>
               </tr>
             </thead>
 
@@ -480,10 +480,18 @@ export function SpreadsheetTab({
                         : 'hover:bg-slate-800/30'
                     }`}
                   >
-                    {/* Coluna 1: Dia */}
+                    {/* Coluna 1: Dia (Sticky para Navegação Mobile) */}
                     <td
                       onClick={() => setSelectedDayDetails(row.day)}
-                      className="py-2.5 px-3 text-center border-r border-slate-800 font-bold whitespace-nowrap cursor-pointer hover:bg-slate-800/50"
+                      className={`sticky left-0 py-2.5 px-3 text-center border-r border-slate-800 font-bold whitespace-nowrap cursor-pointer z-10 shadow-[2px_0_6px_rgba(0,0,0,0.5)] ${
+                        row.isStartingDate
+                          ? 'bg-indigo-950 text-white'
+                          : row.isToday
+                          ? 'bg-emerald-950 text-white'
+                          : row.isWeekend
+                          ? 'bg-slate-950 text-slate-300'
+                          : 'bg-slate-900 text-slate-300 group-hover:bg-slate-850'
+                      }`}
                       title={row.isStartingDate ? 'Ponto de Partida do seu Saldo' : 'Clique para ver os lançamentos deste dia'}
                     >
                       <div className="flex items-center justify-center space-x-1.5">
@@ -618,7 +626,7 @@ export function SpreadsheetTab({
             {/* Footer Totalizador estilo Excel */}
             <tfoot>
               <tr className="bg-slate-950 border-t-2 border-slate-700 font-bold text-xs text-slate-200">
-                <td className="py-3 px-3 text-center border-r border-slate-800 uppercase font-sans">
+                <td className="sticky left-0 bg-slate-950 py-3 px-3 text-center border-r border-slate-800 uppercase font-sans z-10 shadow-[2px_0_6px_rgba(0,0,0,0.5)]">
                   Total
                 </td>
                 <td className="py-3 px-4 border-r border-slate-800 text-right text-emerald-400 font-mono">
