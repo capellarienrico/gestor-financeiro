@@ -148,30 +148,30 @@ export function RecurringTab({
     <div className="space-y-8">
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 flex items-center justify-between">
+        <div className="bg-white border border-stone-200 rounded-2xl p-6 flex items-center justify-between shadow-sm">
           <div className="space-y-1">
-            <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Total Contas Fixas Mensais</span>
-            <div className="text-2xl font-bold text-rose-400">{formatCurrency(totalMonthlyExpenses)}/mês</div>
-            <p className="text-xs text-slate-500">{recurringExpenses.length} itens cadastrados</p>
+            <span className="text-xs text-stone-500 uppercase tracking-wider font-semibold">Total Contas Fixas Mensais</span>
+            <div className="text-2xl font-bold font-mono text-rose-700">{formatCurrency(totalMonthlyExpenses)}/mês</div>
+            <p className="text-xs text-stone-500">{recurringExpenses.length} itens cadastrados</p>
           </div>
           <button
             onClick={handleOpenAddExp}
-            className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center space-x-1.5 transition cursor-pointer"
+            className="px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold flex items-center space-x-1.5 transition border border-stone-200 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Novo Gasto Fixo</span>
           </button>
         </div>
 
-        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 flex items-center justify-between">
+        <div className="bg-white border border-stone-200 rounded-2xl p-6 flex items-center justify-between shadow-sm">
           <div className="space-y-1">
-            <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Total Entradas Recorrentes</span>
-            <div className="text-2xl font-bold text-cyan-400">+{formatCurrency(totalMonthlyIncomes)}/mês</div>
-            <p className="text-xs text-slate-500">Salários, rendimentos e recebíveis</p>
+            <span className="text-xs text-stone-500 uppercase tracking-wider font-semibold">Total Entradas Recorrentes</span>
+            <div className="text-2xl font-bold font-mono text-teal-700">+{formatCurrency(totalMonthlyIncomes)}/mês</div>
+            <p className="text-xs text-stone-500">Salários, rendimentos e recebíveis</p>
           </div>
           <button
             onClick={handleOpenAddInc}
-            className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center space-x-1.5 transition cursor-pointer"
+            className="px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold flex items-center space-x-1.5 transition border border-stone-200 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Nova Entrada Fixa</span>
@@ -181,58 +181,58 @@ export function RecurringTab({
 
       {/* Formulário Novo / Edição de Gasto Fixo */}
       {isExpFormOpen && (
-        <form id="recurring-expense-form" onSubmit={handleSaveExp} className="bg-slate-900 border border-rose-500/30 rounded-2xl p-6 space-y-4 shadow-xl">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-            <h3 className="text-base font-semibold text-white">
+        <form id="recurring-expense-form" onSubmit={handleSaveExp} className="bg-white border border-stone-300 rounded-2xl p-6 space-y-4 shadow-xl">
+          <div className="flex items-center justify-between pb-2 border-b border-stone-200">
+            <h3 className="text-base font-semibold text-stone-900">
               {editingExpId ? 'Editar Gasto Recorrente' : 'Cadastrar Gasto Recorrente (Todo dia X do mês)'}
             </h3>
-            <button type="button" onClick={() => setIsExpFormOpen(false)} className="text-slate-400 hover:text-white cursor-pointer">
+            <button type="button" onClick={() => setIsExpFormOpen(false)} className="text-stone-400 hover:text-stone-700 cursor-pointer">
               <X className="w-5 h-5" />
             </button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div className="sm:col-span-2">
-              <label className="text-xs text-slate-400 block mb-1">Descrição:</label>
+              <label className="text-xs text-stone-600 block mb-1">Descrição:</label>
               <input
                 type="text"
                 placeholder="Ex: Financiamento da casa, Internet, Condomínio..."
                 value={expDesc}
                 onChange={e => setExpDesc(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-rose-500"
+                className="w-full bg-stone-50 border border-stone-300 rounded-lg p-2 text-stone-900 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500"
                 required
               />
             </div>
             <div>
-              <label className="text-xs text-slate-400 block mb-1">Valor Mensal (R$):</label>
+              <label className="text-xs text-stone-600 block mb-1">Valor Mensal (R$):</label>
               <input
                 type="number"
                 step="0.01"
                 placeholder="Ex: 3200"
                 value={expAmount}
                 onChange={e => setExpAmount(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-rose-500"
+                className="w-full bg-stone-50 border border-stone-300 rounded-lg p-2 text-stone-900 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500 font-mono"
                 required
               />
             </div>
             <div>
-              <label className="text-xs text-slate-400 block mb-1">Dia do Vencimento (1 a 31):</label>
+              <label className="text-xs text-stone-600 block mb-1">Dia do Vencimento (1 a 31):</label>
               <input
                 type="number"
                 min="1"
                 max="31"
                 value={expDay}
                 onChange={e => setExpDay(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-rose-500"
+                className="w-full bg-stone-50 border border-stone-300 rounded-lg p-2 text-stone-900 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500"
                 required
               />
             </div>
             <div className="sm:col-span-2">
-              <label className="text-xs text-slate-400 block mb-1">Categoria:</label>
+              <label className="text-xs text-stone-600 block mb-1">Categoria:</label>
               <select
                 value={expCategory}
                 onChange={e => setExpCategory(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-rose-500 cursor-pointer"
+                className="w-full bg-stone-50 border border-stone-300 rounded-lg p-2 text-stone-900 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500 cursor-pointer"
               >
                 {categories.map(c => (
                   <option key={c.id} value={c.id}>{c.name}</option>
@@ -244,13 +244,13 @@ export function RecurringTab({
             <button
               type="button"
               onClick={() => setIsExpFormOpen(false)}
-              className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium cursor-pointer"
+              className="px-4 py-2 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-medium border border-stone-200 cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold cursor-pointer"
+              className="px-5 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold cursor-pointer shadow-sm"
             >
               {editingExpId ? 'Salvar Alterações' : 'Salvar Gasto Fixo'}
             </button>
@@ -260,60 +260,60 @@ export function RecurringTab({
 
       {/* Formulário Novo / Edição de Entrada Fixa */}
       {isIncFormOpen && (
-        <form id="recurring-income-form" onSubmit={handleSaveInc} className="bg-slate-900 border border-cyan-500/30 rounded-2xl p-6 space-y-4 shadow-xl">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-            <h3 className="text-base font-semibold text-white">
+        <form id="recurring-income-form" onSubmit={handleSaveInc} className="bg-white border border-stone-300 rounded-2xl p-6 space-y-4 shadow-xl">
+          <div className="flex items-center justify-between pb-2 border-b border-stone-200">
+            <h3 className="text-base font-semibold text-stone-900">
               {editingIncId ? 'Editar Entrada Recorrente' : 'Cadastrar Entrada Recorrente'}
             </h3>
-            <button type="button" onClick={() => setIsIncFormOpen(false)} className="text-slate-400 hover:text-white cursor-pointer">
+            <button type="button" onClick={() => setIsIncFormOpen(false)} className="text-stone-400 hover:text-stone-700 cursor-pointer">
               <X className="w-5 h-5" />
             </button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div>
-              <label className="text-xs text-slate-400 block mb-1">Descrição:</label>
+              <label className="text-xs text-stone-600 block mb-1">Descrição:</label>
               <input
                 type="text"
                 placeholder="Ex: Salário, Rendimentos, Aluguel recebido..."
                 value={incDesc}
                 onChange={e => setIncDesc(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                className="w-full bg-stone-50 border border-stone-300 rounded-lg p-2 text-stone-900 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500"
                 required
               />
             </div>
             <div>
-              <label className="text-xs text-slate-400 block mb-1">Valor Mensal (R$):</label>
+              <label className="text-xs text-stone-600 block mb-1">Valor Mensal (R$):</label>
               <input
                 type="number"
                 step="0.01"
                 placeholder="Ex: 2400"
                 value={incAmount}
                 onChange={e => setIncAmount(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                className="w-full bg-stone-50 border border-stone-300 rounded-lg p-2 text-stone-900 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500 font-mono"
                 required
               />
             </div>
             <div>
-              <label className="text-xs text-slate-400 block mb-1">Dia do Crédito (1 a 31):</label>
+              <label className="text-xs text-stone-600 block mb-1">Dia do Crédito (1 a 31):</label>
               <input
                 type="number"
                 min="1"
                 max="31"
                 value={incDay}
                 onChange={e => setIncDay(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                className="w-full bg-stone-50 border border-stone-300 rounded-lg p-2 text-stone-900 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500"
                 required
               />
             </div>
             <div>
-              <label className="text-xs text-slate-400 block mb-1">Nº de Parcelas (Opcional):</label>
+              <label className="text-xs text-stone-600 block mb-1">Nº de Parcelas (Opcional):</label>
               <input
                 type="number"
                 placeholder="Ex: 5"
                 value={incInstallments}
                 onChange={e => setIncInstallments(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                className="w-full bg-stone-50 border border-stone-300 rounded-lg p-2 text-stone-900 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500"
               />
             </div>
           </div>
@@ -321,13 +321,13 @@ export function RecurringTab({
             <button
               type="button"
               onClick={() => setIsIncFormOpen(false)}
-              className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium cursor-pointer"
+              className="px-4 py-2 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-medium border border-stone-200 cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold cursor-pointer"
+              className="px-5 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold cursor-pointer shadow-sm"
             >
               {editingIncId ? 'Salvar Alterações' : 'Salvar Entrada'}
             </button>
@@ -336,19 +336,19 @@ export function RecurringTab({
       )}
 
       {/* Tabela de Gastos Recorrentes */}
-      <div className="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden">
-        <div className="p-5 border-b border-slate-800 flex items-center justify-between">
+      <div className="bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-sm">
+        <div className="p-5 border-b border-stone-200 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Calendar className="w-5 h-5 text-rose-400" />
-            <h3 className="font-semibold text-white">Gastos Recorrentes (Todo Mês)</h3>
+            <Calendar className="w-5 h-5 text-rose-600" />
+            <h3 className="font-semibold text-stone-900">Gastos Recorrentes (Todo Mês)</h3>
           </div>
-          <span className="text-xs text-slate-400">Hoje é dia {today} de {monthName}</span>
+          <span className="text-xs text-stone-500">Hoje é dia {today} de {monthName}</span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-800 bg-slate-950/40 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+              <tr className="border-b border-stone-200 bg-stone-50 text-[11px] font-semibold text-stone-600 uppercase tracking-wider">
                 <th className="py-3 px-4">Dia do Mês</th>
                 <th className="py-3 px-4">Descrição</th>
                 <th className="py-3 px-4">Categoria</th>
@@ -357,18 +357,18 @@ export function RecurringTab({
                 <th className="py-3 px-4 text-center">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60 text-sm">
+            <tbody className="divide-y divide-stone-100 text-sm">
               {recurringExpenses.sort((a, b) => a.dayOfMonth - b.dayOfMonth).map(item => {
                 const cat = getCategoryById(item.category, 'expense', categories)
                 const isPast = today > item.dayOfMonth
                 const isToday = today === item.dayOfMonth
 
                 return (
-                  <tr key={item.id} className="hover:bg-slate-800/30 transition">
-                    <td className="py-3.5 px-4 font-bold text-slate-300 whitespace-nowrap">
+                  <tr key={item.id} className="hover:bg-stone-50 transition">
+                    <td className="py-3.5 px-4 font-bold text-stone-700 whitespace-nowrap">
                       Todo dia {item.dayOfMonth}
                     </td>
-                    <td className="py-3.5 px-4 font-medium text-slate-200">
+                    <td className="py-3.5 px-4 font-medium text-stone-900">
                       {item.description}
                     </td>
                     <td className="py-3.5 px-4 whitespace-nowrap">
@@ -378,41 +378,41 @@ export function RecurringTab({
                     </td>
                     <td className="py-3.5 px-4 whitespace-nowrap">
                       {isToday ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
                           Vence Hoje!
                         </span>
                       ) : isPast ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-800 text-slate-400">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-stone-100 text-stone-600">
                           Já Venceu este mês
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-50 text-orange-700 border border-orange-200">
                           Previsto (Dia {item.dayOfMonth})
                         </span>
                       )}
                     </td>
-                    <td className="py-3.5 px-4 font-semibold text-rose-400 text-right whitespace-nowrap">
+                    <td className="py-3.5 px-4 font-semibold font-mono text-rose-700 text-right whitespace-nowrap">
                       {formatCurrency(item.amount)}
                     </td>
                     <td className="py-3.5 px-4 text-center">
                       <div className="flex items-center justify-center space-x-1.5">
                         <button
                           onClick={() => onPostRecurringToDaily(item)}
-                          className="px-2.5 py-1 rounded bg-slate-800 hover:bg-emerald-600 hover:text-white text-slate-300 text-xs font-medium transition cursor-pointer"
+                          className="px-2.5 py-1 rounded bg-stone-100 hover:bg-emerald-600 hover:text-white text-stone-700 text-xs font-medium border border-stone-200 transition cursor-pointer"
                           title="Lançar como despesa paga hoje"
                         >
                           Lançar Pago
                         </button>
                         <button
                           onClick={() => handleStartEditExp(item)}
-                          className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+                          className="p-1 rounded text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition cursor-pointer"
                           title="Editar"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => onDeleteRecurringExpense(item.id)}
-                          className="p-1 rounded text-slate-500 hover:text-rose-400 transition cursor-pointer"
+                          className="p-1 rounded text-stone-400 hover:text-rose-600 transition cursor-pointer"
                           title="Remover"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -428,19 +428,19 @@ export function RecurringTab({
       </div>
 
       {/* Tabela de Entradas Recorrentes */}
-      <div className="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden">
-        <div className="p-5 border-b border-slate-800 flex items-center justify-between">
+      <div className="bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-sm">
+        <div className="p-5 border-b border-stone-200 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <TrendingUp className="w-5 h-5 text-cyan-400" />
-            <h3 className="font-semibold text-white">Entradas Recorrentes & Benefícios</h3>
+            <TrendingUp className="w-5 h-5 text-teal-700" />
+            <h3 className="font-semibold text-stone-900">Entradas Recorrentes & Benefícios</h3>
           </div>
-          <span className="text-xs text-slate-400 font-medium">Fluxo Passivo Mensal</span>
+          <span className="text-xs text-stone-500 font-medium">Fluxo Passivo Mensal</span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-800 bg-slate-950/40 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+              <tr className="border-b border-stone-200 bg-stone-50 text-[11px] font-semibold text-stone-600 uppercase tracking-wider">
                 <th className="py-3 px-4">Dia do Mês</th>
                 <th className="py-3 px-4">Descrição</th>
                 <th className="py-3 px-4">Parcelas</th>
@@ -448,39 +448,39 @@ export function RecurringTab({
                 <th className="py-3 px-4 text-center">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60 text-sm">
+            <tbody className="divide-y divide-stone-100 text-sm">
               {recurringIncomes.map(item => (
-                <tr key={item.id} className="hover:bg-slate-800/30 transition">
-                  <td className="py-3.5 px-4 font-bold text-slate-300 whitespace-nowrap">
+                <tr key={item.id} className="hover:bg-stone-50 transition">
+                  <td className="py-3.5 px-4 font-bold text-stone-700 whitespace-nowrap">
                     Todo dia {item.dayOfMonth}
                   </td>
-                  <td className="py-3.5 px-4 font-medium text-slate-200">
+                  <td className="py-3.5 px-4 font-medium text-stone-900">
                     {item.description}
                   </td>
-                  <td className="py-3.5 px-4 whitespace-nowrap text-xs text-slate-400">
+                  <td className="py-3.5 px-4 whitespace-nowrap text-xs text-stone-500">
                     {item.totalInstallments ? (
-                      <span className="px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-medium">
+                      <span className="px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200 font-medium">
                         {item.remainingInstallments} de {item.totalInstallments} parcelas
                       </span>
                     ) : (
-                      <span className="text-slate-500">Recorrente contínuo</span>
+                      <span className="text-stone-400">Recorrente contínuo</span>
                     )}
                   </td>
-                  <td className="py-3.5 px-4 font-semibold text-cyan-400 text-right whitespace-nowrap">
+                  <td className="py-3.5 px-4 font-semibold font-mono text-teal-700 text-right whitespace-nowrap">
                     +{formatCurrency(item.amount)}
                   </td>
                   <td className="py-3.5 px-4 text-center">
                     <div className="flex items-center justify-center space-x-1.5">
                       <button
                         onClick={() => handleStartEditInc(item)}
-                        className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+                        className="p-1 rounded text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition cursor-pointer"
                         title="Editar"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => onDeleteRecurringIncome(item.id)}
-                        className="p-1 rounded text-slate-500 hover:text-rose-400 transition cursor-pointer"
+                        className="p-1 rounded text-stone-400 hover:text-rose-600 transition cursor-pointer"
                         title="Remover"
                       >
                         <Trash2 className="w-4 h-4" />

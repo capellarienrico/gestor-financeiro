@@ -173,30 +173,26 @@ export function ScenarioSimulatorModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
-      <div className="bg-slate-900 border-t sm:border border-slate-800 rounded-t-3xl sm:rounded-3xl w-full max-w-5xl max-h-[88vh] sm:max-h-[92vh] flex flex-col shadow-2xl overflow-hidden relative pb-safe">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6 bg-stone-900/40 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200">
+      <div className="bg-white border-t sm:border border-stone-200 rounded-t-3xl sm:rounded-3xl w-full max-w-5xl max-h-[88vh] sm:max-h-[92vh] flex flex-col shadow-2xl overflow-hidden relative pb-safe">
         {/* Mobile Drag Handle */}
-        <div className="w-10 h-1 rounded-full bg-slate-700 mx-auto mt-2 sm:hidden shrink-0" />
-
-        {/* Glow Effects */}
-        <div className="absolute -top-24 -left-24 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="w-10 h-1 rounded-full bg-stone-300 mx-auto mt-2 sm:hidden shrink-0" />
 
         {/* Modal Header */}
-        <div className="relative z-10 p-5 sm:p-6 border-b border-slate-800 flex items-start justify-between bg-slate-900/90 backdrop-blur-sm">
+        <div className="relative z-10 p-5 sm:p-6 border-b border-stone-200 flex items-start justify-between bg-stone-50">
           <div className="space-y-1">
             <div className="flex items-center space-x-2">
-              <span className="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
-                <Sparkles className="w-5 h-5 text-indigo-400" />
+              <span className="p-1.5 rounded-lg bg-orange-50 text-orange-600 border border-orange-200">
+                <Sparkles className="w-5 h-5 text-orange-600" />
               </span>
-              <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-black text-stone-900 tracking-tight">
                 Simulador de Cenários "E Se?"
               </h2>
-              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 hidden sm:inline-block">
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-200 hidden sm:inline-block">
                 Stress Testing de Runway
               </span>
             </div>
-            <p className="text-xs sm:text-sm text-slate-400 max-w-2xl">
+            <p className="text-xs sm:text-sm text-stone-500 max-w-2xl">
               Teste o impacto de novas fontes de renda, cortes de gastos, compras pontuais e o efeito dos juros sobre a longevidade da sua reserva financeira.
             </p>
           </div>
@@ -204,14 +200,14 @@ export function ScenarioSimulatorModal({
           <div className="flex items-center space-x-2">
             <button
               onClick={handleReset}
-              className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 rounded-xl transition cursor-pointer"
+              className="p-2 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-xl transition cursor-pointer"
               title="Resetar parâmetros"
             >
               <RotateCcw className="w-4 h-4" />
             </button>
             <button
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 rounded-xl transition cursor-pointer"
+              className="p-2 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-xl transition cursor-pointer"
               title="Fechar"
             >
               <X className="w-5 h-5" />
@@ -224,32 +220,32 @@ export function ScenarioSimulatorModal({
           {/* Top KPI Comparison Banner */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* KPI 1: Runway */}
-            <div className={`p-4 rounded-2xl border transition ${
+            <div className={`p-4 rounded-2xl border transition shadow-sm ${
               runwayDiff.type === 'positive' || runwayDiff.type === 'infinity'
-                ? 'bg-gradient-to-br from-emerald-950/40 via-slate-900 to-slate-900 border-emerald-500/40 shadow-lg shadow-emerald-950/20'
+                ? 'bg-emerald-50/70 border-emerald-200'
                 : runwayDiff.type === 'negative'
-                ? 'bg-gradient-to-br from-rose-950/40 via-slate-900 to-slate-900 border-rose-500/40'
-                : 'bg-slate-900/60 border-slate-800'
+                ? 'bg-rose-50/70 border-rose-200'
+                : 'bg-stone-50 border-stone-200'
             }`}>
-              <div className="flex items-center justify-between text-xs font-medium text-slate-400 mb-1">
+              <div className="flex items-center justify-between text-xs font-medium text-stone-500 mb-1">
                 <span className="flex items-center space-x-1.5">
-                  <Flame className="w-3.5 h-3.5 text-amber-400" />
+                  <Flame className="w-3.5 h-3.5 text-orange-600" />
                   <span>Novo Runway</span>
                 </span>
-                <span className="text-[11px] text-slate-500">
+                <span className="text-[11px] text-stone-500">
                   Base: {baseSim.runwayMonths >= 999 ? 'Infinito' : `${baseSim.runwayMonths} m`}
                 </span>
               </div>
-              <div className="text-2xl font-black text-white">
+              <div className="text-2xl font-black text-stone-900">
                 {customSim.runwayMonths >= 999 ? 'Autonomia Infinita' : `${customSim.runwayMonths} meses`}
               </div>
               <div className="text-xs font-semibold mt-1">
                 <span className={
                   runwayDiff.type === 'positive' || runwayDiff.type === 'infinity'
-                    ? 'text-emerald-400 flex items-center space-x-1'
+                    ? 'text-emerald-700 flex items-center space-x-1'
                     : runwayDiff.type === 'negative'
-                    ? 'text-rose-400 flex items-center space-x-1'
-                    : 'text-slate-400'
+                    ? 'text-rose-700 flex items-center space-x-1'
+                    : 'text-stone-500'
                 }>
                   {(runwayDiff.type === 'positive' || runwayDiff.type === 'infinity') && <TrendingUp className="w-3.5 h-3.5 inline" />}
                   {runwayDiff.type === 'negative' && <TrendingDown className="w-3.5 h-3.5 inline" />}
@@ -259,74 +255,74 @@ export function ScenarioSimulatorModal({
             </div>
 
             {/* KPI 2: Saldo em 6 Meses */}
-            <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-2xl space-y-1">
-              <div className="flex items-center justify-between text-xs font-medium text-slate-400">
+            <div className="bg-stone-50 border border-stone-200 p-4 rounded-2xl space-y-1 shadow-sm">
+              <div className="flex items-center justify-between text-xs font-medium text-stone-500">
                 <span>Saldo em 6 meses</span>
-                <span className="text-[11px] text-slate-500">Base: {formatCurrency(baseSim.balanceIn6Months)}</span>
+                <span className="text-[11px] text-stone-400">Base: {formatCurrency(baseSim.balanceIn6Months)}</span>
               </div>
-              <div className="text-2xl font-black text-indigo-300">
+              <div className="text-2xl font-black font-mono text-stone-900">
                 {formatCurrency(customSim.balanceIn6Months)}
               </div>
-              <p className={`text-xs font-semibold ${diffIn6Months >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+              <p className={`text-xs font-semibold font-mono ${diffIn6Months >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
                 {diffIn6Months >= 0 ? `+${formatCurrency(diffIn6Months)}` : formatCurrency(diffIn6Months)} vs. atual
               </p>
             </div>
 
             {/* KPI 3: Saldo em 12 Meses */}
-            <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-2xl space-y-1">
-              <div className="flex items-center justify-between text-xs font-medium text-slate-400">
+            <div className="bg-stone-50 border border-stone-200 p-4 rounded-2xl space-y-1 shadow-sm">
+              <div className="flex items-center justify-between text-xs font-medium text-stone-500">
                 <span>Saldo em 12 meses</span>
-                <span className="text-[11px] text-slate-500">Base: {formatCurrency(baseSim.balanceIn12Months)}</span>
+                <span className="text-[11px] text-stone-400">Base: {formatCurrency(baseSim.balanceIn12Months)}</span>
               </div>
-              <div className="text-2xl font-black text-cyan-300">
+              <div className="text-2xl font-black font-mono text-stone-900">
                 {formatCurrency(customSim.balanceIn12Months)}
               </div>
-              <p className={`text-xs font-semibold ${diffIn12Months >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+              <p className={`text-xs font-semibold font-mono ${diffIn12Months >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
                 {diffIn12Months >= 0 ? `+${formatCurrency(diffIn12Months)}` : formatCurrency(diffIn12Months)} vs. atual
               </p>
             </div>
 
             {/* KPI 4: Gasto Mensal Total */}
-            <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-2xl space-y-1">
-              <div className="flex items-center justify-between text-xs font-medium text-slate-400">
+            <div className="bg-stone-50 border border-stone-200 p-4 rounded-2xl space-y-1 shadow-sm">
+              <div className="flex items-center justify-between text-xs font-medium text-stone-500">
                 <span>Despesa Total/Mês</span>
-                <span className="text-[11px] text-slate-500">Fixas + Var.</span>
+                <span className="text-[11px] text-stone-400">Fixas + Var.</span>
               </div>
-              <div className="text-2xl font-black text-slate-100">
+              <div className="text-2xl font-black font-mono text-stone-900">
                 {formatCurrency(customSim.monthlyExpenses)}
               </div>
-              <p className="text-xs text-slate-400">
-                Renda total: <span className="text-emerald-400 font-semibold">{formatCurrency(customSim.totalIncomes)}/mês</span>
+              <p className="text-xs text-stone-500">
+                Renda total: <span className="text-emerald-700 font-semibold font-mono">{formatCurrency(customSim.totalIncomes)}/mês</span>
               </p>
             </div>
           </div>
 
           {/* Interactive Sliders Grid */}
-          <div className="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-5 sm:p-6 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+          <div className="bg-stone-50/50 border border-stone-200 rounded-2xl p-5 sm:p-6 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stone-200 pb-4">
               <div className="flex items-center space-x-2">
-                <Sliders className="w-5 h-5 text-indigo-400" />
-                <h3 className="text-base font-bold text-white">Parâmetros de Simulação Interativa</h3>
+                <Sliders className="w-5 h-5 text-orange-600" />
+                <h3 className="text-base font-bold text-stone-900">Parâmetros de Simulação Interativa</h3>
               </div>
               
               <div className="flex items-center space-x-3 text-xs">
                 {/* CDI Toggle */}
-                <label className="flex items-center space-x-2 cursor-pointer bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800 hover:border-slate-700">
+                <label className="flex items-center space-x-2 cursor-pointer bg-white px-3 py-1.5 rounded-xl border border-stone-200 shadow-sm hover:border-stone-300">
                   <input
                     type="checkbox"
                     checked={includeCDI}
                     onChange={e => setIncludeCDI(e.target.checked)}
-                    className="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0 cursor-pointer"
+                    className="rounded bg-stone-100 border-stone-300 text-orange-600 focus:ring-0 cursor-pointer"
                   />
-                  <span className="text-slate-300 font-medium">Juros 100% CDI (~10.75% a.a.)</span>
+                  <span className="text-stone-700 font-medium">Juros 100% CDI (~10.75% a.a.)</span>
                 </label>
 
                 {/* Horizon Switch */}
-                <div className="flex items-center bg-slate-900 p-0.5 rounded-xl border border-slate-800">
+                <div className="flex items-center bg-stone-100 p-0.5 rounded-xl border border-stone-200">
                   <button
                     onClick={() => setHorizonMonths(12)}
                     className={`px-2.5 py-1 rounded-lg font-medium transition cursor-pointer ${
-                      horizonMonths === 12 ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
+                      horizonMonths === 12 ? 'bg-stone-900 text-white shadow-sm' : 'text-stone-600 hover:text-stone-900'
                     }`}
                   >
                     12 meses
@@ -334,7 +330,7 @@ export function ScenarioSimulatorModal({
                   <button
                     onClick={() => setHorizonMonths(24)}
                     className={`px-2.5 py-1 rounded-lg font-medium transition cursor-pointer ${
-                      horizonMonths === 24 ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
+                      horizonMonths === 24 ? 'bg-stone-900 text-white shadow-sm' : 'text-stone-600 hover:text-stone-900'
                     }`}
                   >
                     24 meses
@@ -345,13 +341,13 @@ export function ScenarioSimulatorModal({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Slider 1: Renda Extra Mensal */}
-              <div className="space-y-3 bg-slate-900/50 p-4 rounded-xl border border-slate-800/70">
+              <div className="space-y-3 bg-white p-4 rounded-xl border border-stone-200 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-semibold text-slate-200 flex items-center space-x-2">
-                    <DollarSign className="w-4 h-4 text-emerald-400" />
+                  <label className="text-sm font-semibold text-stone-800 flex items-center space-x-2">
+                    <DollarSign className="w-4 h-4 text-emerald-700" />
                     <span>Renda Extra Mensal</span>
                   </label>
-                  <span className="text-base font-bold text-emerald-400 bg-emerald-950/50 px-2.5 py-0.5 rounded-lg border border-emerald-500/20">
+                  <span className="text-base font-bold font-mono text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200">
                     +{formatCurrency(extraIncome)}/mês
                   </span>
                 </div>
@@ -362,7 +358,7 @@ export function ScenarioSimulatorModal({
                   step="250"
                   value={extraIncome}
                   onChange={e => setExtraIncome(Number(e.target.value))}
-                  className="w-full accent-emerald-500 cursor-pointer h-2 bg-slate-800 rounded-lg"
+                  className="w-full accent-emerald-600 cursor-pointer h-2 bg-stone-200 rounded-lg"
                 />
                 {/* Presets */}
                 <div className="flex flex-wrap gap-1.5 pt-1">
@@ -378,8 +374,8 @@ export function ScenarioSimulatorModal({
                       onClick={() => setExtraIncome(preset.val)}
                       className={`text-[11px] px-2 py-0.5 rounded-md font-medium transition cursor-pointer ${
                         extraIncome === preset.val
-                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                          : 'bg-slate-800/80 text-slate-400 hover:bg-slate-700 hover:text-slate-200'
+                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                          : 'bg-stone-100 text-stone-600 hover:bg-stone-200 hover:text-stone-900'
                       }`}
                     >
                       {preset.label}
@@ -389,13 +385,13 @@ export function ScenarioSimulatorModal({
               </div>
 
               {/* Slider 2: Redução de Gastos Variáveis */}
-              <div className="space-y-3 bg-slate-900/50 p-4 rounded-xl border border-slate-800/70">
+              <div className="space-y-3 bg-white p-4 rounded-xl border border-stone-200 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-semibold text-slate-200 flex items-center space-x-2">
-                    <Percent className="w-4 h-4 text-indigo-400" />
+                  <label className="text-sm font-semibold text-stone-800 flex items-center space-x-2">
+                    <Percent className="w-4 h-4 text-orange-600" />
                     <span>Redução de Gastos Variáveis</span>
                   </label>
-                  <span className="text-base font-bold text-indigo-300 bg-indigo-950/50 px-2.5 py-0.5 rounded-lg border border-indigo-500/20">
+                  <span className="text-base font-bold text-orange-700 bg-orange-50 px-2.5 py-0.5 rounded-lg border border-orange-200">
                     {cutPercent}% de economia
                   </span>
                 </div>
@@ -406,7 +402,7 @@ export function ScenarioSimulatorModal({
                   step="5"
                   value={cutPercent}
                   onChange={e => setCutPercent(Number(e.target.value))}
-                  className="w-full accent-indigo-500 cursor-pointer h-2 bg-slate-800 rounded-lg"
+                  className="w-full accent-orange-600 cursor-pointer h-2 bg-stone-200 rounded-lg"
                 />
                 {/* Presets */}
                 <div className="flex flex-wrap gap-1.5 pt-1">
@@ -421,8 +417,8 @@ export function ScenarioSimulatorModal({
                       onClick={() => setCutPercent(preset.val)}
                       className={`text-[11px] px-2 py-0.5 rounded-md font-medium transition cursor-pointer ${
                         cutPercent === preset.val
-                          ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40'
-                          : 'bg-slate-800/80 text-slate-400 hover:bg-slate-700 hover:text-slate-200'
+                          ? 'bg-orange-50 text-orange-700 border border-orange-200'
+                          : 'bg-stone-100 text-stone-600 hover:bg-stone-200 hover:text-stone-900'
                       }`}
                     >
                       {preset.label}
@@ -432,13 +428,13 @@ export function ScenarioSimulatorModal({
               </div>
 
               {/* Slider 3: Meta Diária Alternativa */}
-              <div className="space-y-3 bg-slate-900/50 p-4 rounded-xl border border-slate-800/70">
+              <div className="space-y-3 bg-white p-4 rounded-xl border border-stone-200 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-semibold text-slate-200 flex items-center space-x-2">
-                    <PiggyBank className="w-4 h-4 text-amber-400" />
+                  <label className="text-sm font-semibold text-stone-800 flex items-center space-x-2">
+                    <PiggyBank className="w-4 h-4 text-amber-600" />
                     <span>Meta Diária Alternativa</span>
                   </label>
-                  <span className="text-base font-bold text-amber-300 bg-amber-950/50 px-2.5 py-0.5 rounded-lg border border-amber-500/20">
+                  <span className="text-base font-bold font-mono text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-lg border border-amber-200">
                     {formatCurrency(simulatedDailyGoal)}/dia
                   </span>
                 </div>
@@ -449,7 +445,7 @@ export function ScenarioSimulatorModal({
                   step="5"
                   value={simulatedDailyGoal}
                   onChange={e => setSimulatedDailyGoal(Number(e.target.value))}
-                  className="w-full accent-amber-500 cursor-pointer h-2 bg-slate-800 rounded-lg"
+                  className="w-full accent-amber-600 cursor-pointer h-2 bg-stone-200 rounded-lg"
                 />
                 {/* Presets */}
                 <div className="flex flex-wrap gap-1.5 pt-1">
@@ -465,8 +461,8 @@ export function ScenarioSimulatorModal({
                       onClick={() => setSimulatedDailyGoal(preset.val)}
                       className={`text-[11px] px-2 py-0.5 rounded-md font-medium transition cursor-pointer ${
                         simulatedDailyGoal === preset.val
-                          ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                          : 'bg-slate-800/80 text-slate-400 hover:bg-slate-700 hover:text-slate-200'
+                          ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                          : 'bg-stone-100 text-stone-600 hover:bg-stone-200 hover:text-stone-900'
                       }`}
                     >
                       {preset.label}
@@ -476,16 +472,16 @@ export function ScenarioSimulatorModal({
               </div>
 
               {/* Slider 4: Gasto Extra Pontual */}
-              <div className="space-y-3 bg-slate-900/50 p-4 rounded-xl border border-slate-800/70">
+              <div className="space-y-3 bg-white p-4 rounded-xl border border-stone-200 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-semibold text-slate-200 flex items-center space-x-2">
-                    <Coins className="w-4 h-4 text-rose-400" />
+                  <label className="text-sm font-semibold text-stone-800 flex items-center space-x-2">
+                    <Coins className="w-4 h-4 text-rose-600" />
                     <span>Gasto Extra Pontual (Imprevisto/Viagem)</span>
                   </label>
-                  <span className={`text-base font-bold px-2.5 py-0.5 rounded-lg border ${
+                  <span className={`text-base font-bold font-mono px-2.5 py-0.5 rounded-lg border ${
                     oneTimeExpense > 0
-                      ? 'text-rose-400 bg-rose-950/50 border-rose-500/20'
-                      : 'text-slate-400 bg-slate-800 border-slate-700'
+                      ? 'text-rose-700 bg-rose-50 border-rose-200'
+                      : 'text-stone-500 bg-stone-100 border-stone-200'
                   }`}>
                     {oneTimeExpense > 0 ? `-${formatCurrency(oneTimeExpense)}` : 'R$ 0'}
                   </span>
@@ -497,7 +493,7 @@ export function ScenarioSimulatorModal({
                   step="500"
                   value={oneTimeExpense}
                   onChange={e => setOneTimeExpense(Number(e.target.value))}
-                  className="w-full accent-rose-500 cursor-pointer h-2 bg-slate-800 rounded-lg"
+                  className="w-full accent-rose-600 cursor-pointer h-2 bg-stone-200 rounded-lg"
                 />
                 {/* Presets */}
                 <div className="flex flex-wrap gap-1.5 pt-1">
@@ -512,8 +508,8 @@ export function ScenarioSimulatorModal({
                       onClick={() => setOneTimeExpense(preset.val)}
                       className={`text-[11px] px-2 py-0.5 rounded-md font-medium transition cursor-pointer ${
                         oneTimeExpense === preset.val
-                          ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-                          : 'bg-slate-800/80 text-slate-400 hover:bg-slate-700 hover:text-slate-200'
+                          ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                          : 'bg-stone-100 text-stone-600 hover:bg-stone-200 hover:text-stone-900'
                       }`}
                     >
                       {preset.label}
@@ -525,25 +521,25 @@ export function ScenarioSimulatorModal({
           </div>
 
           {/* Comparative Balance Evolution Chart */}
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 sm:p-6 space-y-4">
+          <div className="bg-white border border-stone-200 rounded-2xl p-5 sm:p-6 space-y-4 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
-                <h3 className="text-base font-bold text-white flex items-center space-x-2">
+                <h3 className="text-base font-bold text-stone-900 flex items-center space-x-2">
                   <span>Projeção Comparativa do Saldo ({horizonMonths} meses)</span>
                 </h3>
-                <p className="text-xs text-slate-400">
-                  Compare a linha do <span className="text-slate-400 font-medium">Cenário Atual</span> contra o impacto do <span className="text-emerald-400 font-medium">Cenário Otimizado</span>.
+                <p className="text-xs text-stone-500">
+                  Compare a linha do <span className="text-stone-600 font-medium">Cenário Atual</span> contra o impacto do <span className="text-emerald-700 font-medium">Cenário Otimizado</span>.
                 </p>
               </div>
 
               <div className="flex items-center space-x-4 text-xs">
                 <div className="flex items-center space-x-1.5">
-                  <span className="w-3 h-1 bg-slate-500 rounded" />
-                  <span className="text-slate-400">Cenário Atual</span>
+                  <span className="w-3 h-1 bg-stone-400 rounded" />
+                  <span className="text-stone-500">Cenário Atual</span>
                 </div>
                 <div className="flex items-center space-x-1.5">
-                  <span className="w-3 h-1 bg-emerald-400 rounded" />
-                  <span className="text-emerald-400 font-semibold">Cenário Simulado</span>
+                  <span className="w-3 h-1 bg-emerald-600 rounded" />
+                  <span className="text-emerald-700 font-semibold">Cenário Simulado</span>
                 </div>
               </div>
             </div>
@@ -553,22 +549,22 @@ export function ScenarioSimulatorModal({
                 <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                   <defs>
                     <linearGradient id="simulatedGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
+                      <stop offset="5%" stopColor="#059669" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#059669" stopOpacity={0.0} />
                     </linearGradient>
                     <linearGradient id="baseGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#64748b" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="#64748b" stopOpacity={0.0} />
+                      <stop offset="5%" stopColor="#78716c" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#78716c" stopOpacity={0.0} />
                     </linearGradient>
                   </defs>
                   <XAxis
                     dataKey="label"
-                    stroke="#64748b"
+                    stroke="#a8a29e"
                     fontSize={11}
                     tickLine={false}
                   />
                   <YAxis
-                    stroke="#64748b"
+                    stroke="#a8a29e"
                     fontSize={11}
                     tickLine={false}
                     tickFormatter={val => `R$${(val / 1000).toFixed(0)}k`}
@@ -576,16 +572,17 @@ export function ScenarioSimulatorModal({
                   <Tooltip
                     formatter={(value, name) => [formatCurrency(value), name]}
                     contentStyle={{
-                      backgroundColor: '#0f172a',
-                      borderColor: '#334155',
+                      backgroundColor: '#ffffff',
+                      borderColor: '#e7e5e4',
                       borderRadius: '12px',
-                      boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)'
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                      color: '#1c1917'
                     }}
                   />
                   <Area
                     type="monotone"
                     dataKey="Cenário Atual"
-                    stroke="#64748b"
+                    stroke="#78716c"
                     strokeWidth={2}
                     fillOpacity={1}
                     fill="url(#baseGradient)"
@@ -593,7 +590,7 @@ export function ScenarioSimulatorModal({
                   <Area
                     type="monotone"
                     dataKey="Cenário Simulado"
-                    stroke="#10b981"
+                    stroke="#059669"
                     strokeWidth={2.5}
                     fillOpacity={1}
                     fill="url(#simulatedGradient)"
@@ -605,10 +602,10 @@ export function ScenarioSimulatorModal({
         </div>
 
         {/* Modal Footer */}
-        <div className="relative z-10 p-5 sm:p-6 border-t border-slate-800 bg-slate-900/90 backdrop-blur-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="text-xs text-slate-400">
+        <div className="relative z-10 p-5 sm:p-6 border-t border-stone-200 bg-stone-50 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-xs text-stone-500">
             {applySuccessMessage ? (
-              <span className="text-emerald-400 font-semibold flex items-center space-x-1.5">
+              <span className="text-emerald-700 font-semibold flex items-center space-x-1.5">
                 <Check className="w-4 h-4" />
                 <span>{applySuccessMessage}</span>
               </span>
@@ -622,13 +619,13 @@ export function ScenarioSimulatorModal({
           <div className="flex items-center space-x-3 w-full sm:w-auto">
             <button
               onClick={onClose}
-              className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 font-medium text-sm transition cursor-pointer"
+              className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-stone-300 hover:bg-stone-100 text-stone-700 font-medium text-sm transition cursor-pointer"
             >
               Apenas Simular
             </button>
             <button
               onClick={handleApply}
-              className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition flex items-center justify-center space-x-2 shadow-lg shadow-indigo-600/30 cursor-pointer"
+              className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-semibold text-sm transition flex items-center justify-center space-x-2 shadow-sm cursor-pointer"
             >
               <Check className="w-4 h-4" />
               <span>Aplicar estas metas ao meu plano</span>

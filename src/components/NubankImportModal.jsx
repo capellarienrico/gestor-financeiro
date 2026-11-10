@@ -240,25 +240,25 @@ export function NubankImportModal({
   })
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
-      <div className="bg-slate-900 border-t sm:border border-slate-800 rounded-t-3xl sm:rounded-3xl w-full max-w-4xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] pb-safe animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-stone-900/40 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-white border-t sm:border border-stone-200 rounded-t-3xl sm:rounded-3xl w-full max-w-4xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] pb-safe animate-in fade-in zoom-in-95 duration-150">
         {/* Mobile Drag Handle */}
-        <div className="w-10 h-1 rounded-full bg-slate-700 mx-auto mt-2 sm:hidden shrink-0" />
+        <div className="w-10 h-1 rounded-full bg-stone-300 mx-auto mt-2 sm:hidden shrink-0" />
 
         {/* Modal Header */}
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-800 bg-slate-950/50 shrink-0">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-stone-200 bg-stone-50 shrink-0">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-600/20 text-purple-400 flex items-center justify-center border border-purple-500/20 shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center border border-orange-200 shrink-0">
               <UploadCloud className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base sm:text-lg font-bold text-white">Importar Extrato & Fatura Bancária</h3>
-              <p className="text-xs text-slate-400">Preencha os dias da planilha automaticamente e aprenda seus estabelecimentos</p>
+              <h3 className="text-base sm:text-lg font-bold text-stone-900">Importar Extrato & Fatura Bancária</h3>
+              <p className="text-xs text-stone-500">Preencha os dias da planilha automaticamente e aprenda seus estabelecimentos</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+            className="p-2 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -268,14 +268,14 @@ export function NubankImportModal({
           {/* Suporte Multi-Bancos Chips */}
           {!analysis && (
             <div className="space-y-1.5">
-              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+              <span className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider block">
                 Bancos e formatos compatíveis:
               </span>
               <div className="flex flex-wrap gap-1.5">
                 {SUPPORTED_BANKS.map((b) => (
                   <span
                     key={b.name}
-                    className={`text-[11px] px-2.5 py-0.5 rounded-full border font-medium ${b.color}`}
+                    className="text-[11px] px-2.5 py-0.5 rounded-full border border-stone-200 bg-stone-50 text-stone-700 font-medium"
                   >
                     {b.name}
                   </span>
@@ -286,13 +286,13 @@ export function NubankImportModal({
 
           {/* 100% Seguro e Privado Callout */}
           {!analysis && (
-            <div className="p-4 rounded-xl bg-indigo-950/20 border border-indigo-500/20 text-xs text-indigo-300 space-y-1.5">
-              <div className="flex items-center space-x-1.5 font-semibold text-indigo-400">
-                <ShieldCheck className="w-4 h-4" />
+            <div className="p-4 rounded-xl bg-orange-50/70 border border-orange-200 text-xs text-orange-950 space-y-1.5">
+              <div className="flex items-center space-x-1.5 font-semibold text-orange-800">
+                <ShieldCheck className="w-4 h-4 text-orange-600" />
                 <span>100% Seguro e Privado: Processamento Local no seu Navegador</span>
               </div>
-              <p className="text-slate-300 leading-relaxed">
-                Aceita faturas de cartão e extratos em <strong>.OFX</strong> ou <strong>.CSV</strong> de qualquer banco brasileiro (Nubank, Itaú, Inter, Bradesco, Santander, etc.). Os dados são processados <strong className="text-white">100% localmente</strong>.
+              <p className="text-stone-600 leading-relaxed">
+                Aceita faturas de cartão e extratos em <strong>.OFX</strong> ou <strong>.CSV</strong> de qualquer banco brasileiro (Nubank, Itaú, Inter, Bradesco, Santander, etc.). Os dados são processados <strong className="text-stone-900">100% localmente</strong>.
               </p>
             </div>
           )}
@@ -304,18 +304,18 @@ export function NubankImportModal({
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDrop}
               className={`border-2 border-dashed rounded-2xl p-8 text-center transition ${
-                isDragging ? 'border-purple-500 bg-purple-500/10' : 'border-slate-800 hover:border-slate-700 bg-slate-950/40'
+                isDragging ? 'border-orange-500 bg-orange-50/50' : 'border-stone-300 hover:border-stone-400 bg-stone-50'
               }`}
             >
-              <FileText className="w-12 h-12 text-purple-400 mx-auto mb-3" />
-              <h4 className="text-sm font-semibold text-white mb-1">
+              <FileText className="w-12 h-12 text-orange-600 mx-auto mb-3" />
+              <h4 className="text-sm font-semibold text-stone-900 mb-1">
                 Arraste seu arquivo .OFX ou .CSV de fatura/extrato aqui
               </h4>
-              <p className="text-xs text-slate-400 mb-4">
+              <p className="text-xs text-stone-500 mb-4">
                 Nubank (fatura do cartão ou conta), Itaú, Inter, Bradesco, Santander, C6, etc.
               </p>
 
-              <label className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold cursor-pointer transition shadow-lg shadow-purple-600/20">
+              <label className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold cursor-pointer transition shadow-sm">
                 <UploadCloud className="w-4 h-4" />
                 <span>Escolher Arquivo (.OFX ou .CSV)</span>
                 <input
@@ -327,8 +327,8 @@ export function NubankImportModal({
               </label>
 
               {/* Guia Rápido */}
-              <div className="mt-6 pt-6 border-t border-slate-800/80 text-left text-xs text-slate-400 space-y-1.5">
-                <span className="font-semibold text-slate-300 block mb-1">Como baixar no seu app:</span>
+              <div className="mt-6 pt-6 border-t border-stone-200 text-left text-xs text-stone-500 space-y-1.5">
+                <span className="font-semibold text-stone-700 block mb-1">Como baixar no seu app:</span>
                 <p>• <strong>Nubank:</strong> Cartão de Crédito &gt; Baixar fatura &gt; Formato CSV ou OFX.</p>
                 <p>• <strong>Itaú, Bradesco, Santander, BB:</strong> Cartões ou Extrato &gt; Exportar período &gt; OFX ou CSV.</p>
                 <p>• <strong>Inter, C6 Bank:</strong> Menu Extrato / Fatura &gt; Exportar.</p>
@@ -337,15 +337,15 @@ export function NubankImportModal({
           )}
 
           {error && (
-            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-400 flex items-center space-x-2">
+            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-center space-x-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
           {aiSuccessMessage && (
-            <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 flex items-center space-x-2 animate-in fade-in">
-              <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
+            <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center space-x-2 animate-in fade-in">
+              <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>{aiSuccessMessage}</span>
             </div>
           )}
@@ -354,18 +354,18 @@ export function NubankImportModal({
           {analysis && (
             <div className="space-y-4">
               {/* Status Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-800 gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-stone-200 gap-3">
                 <div className="flex items-center space-x-3">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
                   <div>
-                    <span className="text-sm font-bold text-white block">
+                    <span className="text-sm font-bold text-stone-900 block">
                       {reviewedItems.length} compras identificadas no arquivo
                     </span>
                     <div className="flex items-center space-x-2 mt-0.5">
-                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20 font-medium">
+                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200 font-medium">
                         🏦 {analysis.detectedBank || 'Banco'}
                       </span>
-                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-stone-100 text-stone-600 border border-stone-200">
                         📄 {file?.name || 'Extrato'}
                       </span>
                     </div>
@@ -375,7 +375,7 @@ export function NubankImportModal({
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => { setAnalysis(null); setFile(null); setReviewedItems([]); }}
-                    className="text-xs text-slate-400 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-slate-800 transition cursor-pointer"
+                    className="text-xs text-stone-500 hover:text-stone-800 px-2.5 py-1.5 rounded-lg hover:bg-stone-100 transition cursor-pointer"
                   >
                     Trocar arquivo
                   </button>
@@ -383,14 +383,14 @@ export function NubankImportModal({
               </div>
 
               {/* Sub-tabs switch: Revisão vs Resumo */}
-              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+              <div className="flex items-center justify-between border-b border-stone-200 pb-2">
                 <div className="flex space-x-2">
                   <button
                     onClick={() => setActiveTab('review')}
                     className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center space-x-1.5 ${
                       activeTab === 'review'
-                        ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
-                        : 'bg-slate-800 text-slate-400 hover:text-white'
+                        ? 'bg-stone-900 text-white shadow-sm'
+                        : 'bg-stone-100 text-stone-600 hover:text-stone-900'
                     }`}
                   >
                     <FileText className="w-3.5 h-3.5" />
@@ -401,8 +401,8 @@ export function NubankImportModal({
                     onClick={() => setActiveTab('summary')}
                     className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center space-x-1.5 ${
                       activeTab === 'summary'
-                        ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
-                        : 'bg-slate-800 text-slate-400 hover:text-white'
+                        ? 'bg-stone-900 text-white shadow-sm'
+                        : 'bg-stone-100 text-stone-600 hover:text-stone-900'
                     }`}
                   >
                     <Building2 className="w-3.5 h-3.5" />
@@ -415,13 +415,13 @@ export function NubankImportModal({
                   <button
                     onClick={handleCategorizeWithAI}
                     disabled={isAiLoading}
-                    className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white text-xs font-bold transition flex items-center space-x-1.5 shadow-md shadow-purple-500/20 cursor-pointer disabled:opacity-50"
+                    className="px-3.5 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold transition flex items-center space-x-1.5 shadow-sm cursor-pointer disabled:opacity-50"
                     title={geminiApiKey ? "Classificar todas as compras automaticamente usando a IA do Gemini" : "Requer chave gratuita do Gemini em Configurações"}
                   >
                     {isAiLoading ? (
                       <RotateCw className="w-3.5 h-3.5 animate-spin" />
                     ) : (
-                      <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                      <Sparkles className="w-3.5 h-3.5 text-amber-200" />
                     )}
                     <span>{isAiLoading ? 'Classificando com IA...' : '✨ Categorizar com IA (Gemini)'}</span>
                   </button>
@@ -437,7 +437,7 @@ export function NubankImportModal({
                       <button
                         onClick={() => setFilterType('all')}
                         className={`px-2.5 py-1 rounded-lg text-xs font-medium transition cursor-pointer ${
-                          filterType === 'all' ? 'bg-slate-800 text-white font-bold' : 'text-slate-400 hover:text-slate-200'
+                          filterType === 'all' ? 'bg-stone-900 text-white font-bold shadow-sm' : 'text-stone-500 hover:text-stone-800'
                         }`}
                       >
                         Todas ({reviewedItems.length})
@@ -445,7 +445,7 @@ export function NubankImportModal({
                       <button
                         onClick={() => setFilterType('card')}
                         className={`px-2.5 py-1 rounded-lg text-xs font-medium transition cursor-pointer ${
-                          filterType === 'card' ? 'bg-purple-600/30 text-purple-300 font-bold border border-purple-500/30' : 'text-slate-400 hover:text-slate-200'
+                          filterType === 'card' ? 'bg-purple-100 text-purple-800 font-bold border border-purple-200' : 'text-stone-500 hover:text-stone-800'
                         }`}
                       >
                         Cartão ({reviewedItems.filter(i => i.isCard).length})
@@ -453,7 +453,7 @@ export function NubankImportModal({
                       <button
                         onClick={() => setFilterType('uncategorized')}
                         className={`px-2.5 py-1 rounded-lg text-xs font-medium transition cursor-pointer ${
-                          filterType === 'uncategorized' ? 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30' : 'text-slate-400 hover:text-slate-200'
+                          filterType === 'uncategorized' ? 'bg-amber-100 text-amber-800 font-bold border border-amber-200' : 'text-stone-500 hover:text-stone-800'
                         }`}
                       >
                         Sem categoria ({reviewedItems.filter(i => i.category === 'outros').length})
@@ -461,21 +461,21 @@ export function NubankImportModal({
                     </div>
 
                     <div className="relative w-full sm:w-64">
-                      <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
+                      <Search className="w-3.5 h-3.5 text-stone-400 absolute left-3 top-2.5" />
                       <input
                         type="text"
                         placeholder="Buscar por loja..."
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                        className="w-full bg-stone-50 border border-stone-200 rounded-xl pl-8 pr-3 py-1.5 text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-orange-500"
                       />
                     </div>
                   </div>
 
                   {/* Table of items */}
-                  <div className="border border-slate-800 rounded-2xl overflow-hidden bg-slate-950/60 max-h-72 overflow-y-auto">
+                  <div className="border border-stone-200 rounded-2xl overflow-hidden bg-white max-h-72 overflow-y-auto shadow-sm">
                     <table className="w-full text-left border-collapse text-xs">
-                      <thead className="bg-slate-900/90 sticky top-0 border-b border-slate-800 z-10 text-slate-400 uppercase tracking-wider text-[10px] font-semibold">
+                      <thead className="bg-stone-50 sticky top-0 border-b border-stone-200 z-10 text-stone-600 uppercase tracking-wider text-[10px] font-semibold">
                         <tr>
                           <th className="py-2.5 px-3">Data</th>
                           <th className="py-2.5 px-3">Estabelecimento</th>
@@ -486,31 +486,31 @@ export function NubankImportModal({
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-850">
+                      <tbody className="divide-y divide-stone-100">
                         {filteredItems.map(item => {
                           const catObj = categories.find(c => c.id === item.category)
                           return (
-                            <tr key={item.id} className="hover:bg-slate-800/30 transition">
-                              <td className="py-2 px-3 text-slate-400 whitespace-nowrap font-mono text-[11px]">
+                            <tr key={item.id} className="hover:bg-stone-50 transition">
+                              <td className="py-2 px-3 text-stone-500 whitespace-nowrap font-mono text-[11px]">
                                 {item.date.split('-').reverse().slice(0, 2).join('/')}
                               </td>
-                              <td className="py-2 px-3 text-slate-200 font-medium">
+                              <td className="py-2 px-3 text-stone-800 font-medium">
                                 <div className="flex items-center space-x-1.5">
                                   <span>{item.description}</span>
                                   {item.aiCategorized && (
-                                    <span className="text-[9px] px-1 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-bold shrink-0">
+                                    <span className="text-[9px] px-1 py-0.2 rounded bg-orange-50 text-orange-700 border border-orange-200 font-bold shrink-0">
                                       IA
                                     </span>
                                   )}
                                   {item.isCard && (
-                                    <span className="text-[9px] px-1 py-0.2 rounded bg-purple-500/20 text-purple-300 shrink-0">
+                                    <span className="text-[9px] px-1 py-0.2 rounded bg-purple-50 text-purple-700 border border-purple-200 shrink-0">
                                       Crédito
                                     </span>
                                   )}
                                 </div>
                               </td>
                               <td className="py-2 px-3 text-right font-mono font-bold whitespace-nowrap">
-                                <span className={item.type === 'expense' ? 'text-rose-400' : 'text-emerald-400'}>
+                                <span className={item.type === 'expense' ? 'text-rose-700' : 'text-emerald-700'}>
                                   {item.type === 'expense' ? '-' : '+'}{formatCurrency(item.amount)}
                                 </span>
                               </td>
@@ -518,11 +518,10 @@ export function NubankImportModal({
                                 <select
                                   value={item.category}
                                   onChange={e => handleItemCategoryChange(item.id, e.target.value)}
-                                  className="bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-[11px] text-slate-200 focus:outline-none focus:ring-1 focus:ring-purple-500 cursor-pointer"
-                                  style={{ color: catObj?.color || '#94a3b8' }}
+                                  className="bg-stone-50 border border-stone-200 rounded-lg px-2 py-1 text-[11px] text-stone-800 focus:outline-none focus:ring-1 focus:ring-orange-500 cursor-pointer"
                                 >
                                   {categories.map(c => (
-                                    <option key={c.id} value={c.id} style={{ color: c.color, backgroundColor: '#0f172a' }}>
+                                    <option key={c.id} value={c.id}>
                                       {c.name}
                                     </option>
                                   ))}
@@ -534,7 +533,7 @@ export function NubankImportModal({
                                   checked={item.rememberMerchant}
                                   onChange={() => handleToggleRemember(item.id)}
                                   title="Lembrar este estabelecimento para faturas futuras"
-                                  className="w-4 h-4 rounded text-purple-600 bg-slate-900 border-slate-700 focus:ring-purple-500 cursor-pointer"
+                                  className="w-4 h-4 rounded text-orange-600 bg-white border-stone-300 focus:ring-orange-500 cursor-pointer"
                                 />
                               </td>
                             </tr>
@@ -545,13 +544,13 @@ export function NubankImportModal({
                   </div>
 
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-                    <p className="text-[11px] text-slate-400">
+                    <p className="text-[11px] text-stone-500">
                       💡 Estabelecimentos com <strong>"Lembrar"</strong> ativado são memorizados pelo app e categorizados automaticamente no futuro.
                     </p>
 
                     <button
                       onClick={handleConfirmImport}
-                      className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs flex items-center justify-center space-x-2 shadow-lg shadow-emerald-600/20 cursor-pointer transition active:scale-95"
+                      className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs flex items-center justify-center space-x-2 shadow-sm cursor-pointer transition active:scale-95"
                     >
                       <Check className="w-4 h-4" />
                       <span>Confirmar e Lançar {reviewedItems.length} Compras na Planilha</span>
@@ -564,56 +563,56 @@ export function NubankImportModal({
               {activeTab === 'summary' && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800">
-                      <span className="text-xs text-slate-400 block mb-1">Média Mensal de Gastos</span>
-                      <div className="text-xl font-bold text-rose-400 font-mono">
+                    <div className="p-4 rounded-xl bg-stone-50 border border-stone-200">
+                      <span className="text-xs text-stone-500 block mb-1">Média Mensal de Gastos</span>
+                      <div className="text-xl font-bold text-rose-700 font-mono">
                         {formatCurrency(analysis.averageMonthlyExpense)}
                       </div>
-                      <span className="text-[11px] text-slate-500">Baseado no período analisado</span>
+                      <span className="text-[11px] text-stone-400">Baseado no período analisado</span>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-purple-950/20 border border-purple-500/30">
-                      <span className="text-xs text-purple-300 block mb-1">Média Diária Calculada</span>
-                      <div className="text-xl font-bold text-purple-400 font-mono">
-                        {formatCurrency(analysis.averageDailyExpense)}<span className="text-xs text-purple-300 font-normal">/dia</span>
+                    <div className="p-4 rounded-xl bg-purple-50 border border-purple-200">
+                      <span className="text-xs text-purple-700 block mb-1">Média Diária Calculada</span>
+                      <div className="text-xl font-bold text-purple-800 font-mono">
+                        {formatCurrency(analysis.averageDailyExpense)}<span className="text-xs text-purple-600 font-normal">/dia</span>
                       </div>
-                      <span className="text-[11px] text-purple-300">Pode virar sua meta de gastos</span>
+                      <span className="text-[11px] text-purple-600">Pode virar sua meta de gastos</span>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800">
-                      <span className="text-xs text-slate-400 block mb-1">Transações Identificadas</span>
-                      <div className="text-xl font-bold text-white font-mono">
+                    <div className="p-4 rounded-xl bg-stone-50 border border-stone-200">
+                      <span className="text-xs text-stone-500 block mb-1">Transações Identificadas</span>
+                      <div className="text-xl font-bold text-stone-900 font-mono">
                         {analysis.transactions.length}
                       </div>
-                      <span className="text-[11px] text-slate-500">{analysis.monthsCount} mês(es) analisados</span>
+                      <span className="text-[11px] text-stone-400">{analysis.monthsCount} mês(es) analisados</span>
                     </div>
                   </div>
 
                   {/* Recurring expenses detected */}
                   {analysis.detectedRecurring.length > 0 && (
                     <div className="space-y-2">
-                      <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center space-x-1.5">
-                        <Sparkles className="w-4 h-4 text-amber-400" />
+                      <h4 className="text-xs font-semibold text-stone-700 uppercase tracking-wider flex items-center space-x-1.5">
+                        <Sparkles className="w-4 h-4 text-orange-600" />
                         <span>Contas Fixas & Assinaturas Detectadas Automaticamente:</span>
                       </h4>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-1">
                         {analysis.detectedRecurring.map(item => (
-                          <div key={item.id} className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 text-xs flex justify-between items-center">
+                          <div key={item.id} className="p-2.5 rounded-lg bg-stone-50 border border-stone-200 text-xs flex justify-between items-center">
                             <div>
-                              <span className="text-slate-200 font-medium block">{item.description}</span>
-                              <span className="text-slate-500">Todo dia ~{item.dayOfMonth}</span>
+                              <span className="text-stone-800 font-medium block">{item.description}</span>
+                              <span className="text-stone-500">Todo dia ~{item.dayOfMonth}</span>
                             </div>
-                            <span className="font-semibold text-rose-400 font-mono">{formatCurrency(item.amount)}</span>
+                            <span className="font-semibold text-rose-700 font-mono">{formatCurrency(item.amount)}</span>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
 
-                  <div className="pt-3 border-t border-slate-800 flex justify-end">
+                  <div className="pt-3 border-t border-stone-200 flex justify-end">
                     <button
                       onClick={handleApplyAll}
-                      className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition flex items-center space-x-2 shadow-lg shadow-emerald-600/20 cursor-pointer"
+                      className="px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-semibold text-xs transition flex items-center space-x-2 shadow-sm cursor-pointer"
                     >
                       <CheckCircle2 className="w-4 h-4" />
                       <span>Aplicar Médias & Fixos no Simulador Diário</span>
