@@ -52,6 +52,9 @@ export function RecurringTab({
     setExpDay(item.dayOfMonth)
     setExpCategory(item.category)
     setIsExpFormOpen(true)
+    setTimeout(() => {
+      document.getElementById('recurring-expense-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 60)
   }
 
   const handleSaveExp = (e) => {
@@ -100,6 +103,9 @@ export function RecurringTab({
     setIncCategory(item.category)
     setIncInstallments(item.totalInstallments ? item.totalInstallments.toString() : '')
     setIsIncFormOpen(true)
+    setTimeout(() => {
+      document.getElementById('recurring-income-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 60)
   }
 
   const handleSaveInc = (e) => {
@@ -175,7 +181,7 @@ export function RecurringTab({
 
       {/* Formulário Novo / Edição de Gasto Fixo */}
       {isExpFormOpen && (
-        <form onSubmit={handleSaveExp} className="bg-slate-900 border border-rose-500/30 rounded-2xl p-6 space-y-4 shadow-xl">
+        <form id="recurring-expense-form" onSubmit={handleSaveExp} className="bg-slate-900 border border-rose-500/30 rounded-2xl p-6 space-y-4 shadow-xl">
           <div className="flex items-center justify-between pb-2 border-b border-slate-800">
             <h3 className="text-base font-semibold text-white">
               {editingExpId ? 'Editar Gasto Recorrente' : 'Cadastrar Gasto Recorrente (Todo dia X do mês)'}
@@ -254,7 +260,7 @@ export function RecurringTab({
 
       {/* Formulário Novo / Edição de Entrada Fixa */}
       {isIncFormOpen && (
-        <form onSubmit={handleSaveInc} className="bg-slate-900 border border-cyan-500/30 rounded-2xl p-6 space-y-4 shadow-xl">
+        <form id="recurring-income-form" onSubmit={handleSaveInc} className="bg-slate-900 border border-cyan-500/30 rounded-2xl p-6 space-y-4 shadow-xl">
           <div className="flex items-center justify-between pb-2 border-b border-slate-800">
             <h3 className="text-base font-semibold text-white">
               {editingIncId ? 'Editar Entrada Recorrente' : 'Cadastrar Entrada Recorrente'}

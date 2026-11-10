@@ -15,7 +15,8 @@ import {
   RefreshCw,
   ExternalLink,
   CreditCard,
-  Info
+  Info,
+  Sparkles
 } from 'lucide-react'
 import { importBackup } from '../utils/storage'
 import { DRIVE_FILENAME } from '../utils/googleDriveService'
@@ -200,53 +201,53 @@ export function SettingsTab({
         </div>
       </div>
 
-      {/* Navigation SubTabs */}
-      <div className="flex space-x-2 border-b border-slate-800 pb-2">
+      {/* Navigation SubTabs (Rolagem fluida no mobile) */}
+      <div className="flex space-x-2 border-b border-slate-800 pb-2.5 overflow-x-auto scrollbar-none">
         <button
           onClick={() => setActiveSubTab('expenses')}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
+          className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer whitespace-nowrap shrink-0 ${
             activeSubTab === 'expenses'
               ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
               : 'bg-slate-900 text-slate-400 hover:text-slate-200'
           }`}
         >
-          Categorias de Despesas ({categories.length})
+          Despesas ({categories.length})
         </button>
         <button
           onClick={() => setActiveSubTab('incomes')}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
+          className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer whitespace-nowrap shrink-0 ${
             activeSubTab === 'incomes'
               ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
               : 'bg-slate-900 text-slate-400 hover:text-slate-200'
           }`}
         >
-          Categorias de Entradas ({incomeCategories.length})
+          Entradas ({incomeCategories.length})
         </button>
         <button
           onClick={() => setActiveSubTab('card')}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center space-x-1.5 ${
+          className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center space-x-1.5 whitespace-nowrap shrink-0 ${
             activeSubTab === 'card'
               ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
               : 'bg-slate-900 text-slate-400 hover:text-slate-200'
           }`}
         >
           <CreditCard className="w-3.5 h-3.5" />
-          <span>Cartão de Crédito ({cardDueDay ? `Venc. ${cardDueDay}` : 'Fatura'})</span>
+          <span>Cartão de Crédito</span>
         </button>
         <button
           onClick={() => setActiveSubTab('ai')}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center space-x-1.5 ${
+          className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center space-x-1.5 whitespace-nowrap shrink-0 ${
             activeSubTab === 'ai'
               ? 'bg-purple-600/30 text-purple-300 border border-purple-500/40'
               : 'bg-slate-900 text-slate-400 hover:text-slate-200'
           }`}
         >
           <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-          <span>IA & Estabelecimentos ({Object.keys(merchantRules || {}).length})</span>
+          <span>IA & Lojas ({Object.keys(merchantRules || {}).length})</span>
         </button>
         <button
           onClick={() => setActiveSubTab('general')}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
+          className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer whitespace-nowrap shrink-0 ${
             activeSubTab === 'general'
               ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'
               : 'bg-slate-900 text-slate-400 hover:text-slate-200'

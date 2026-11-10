@@ -429,6 +429,8 @@ export function App() {
             onAddTransaction={handleAddTransaction}
             onEditTransaction={handleEditTransaction}
             onDeleteTransaction={handleDeleteTransaction}
+            onEditRecurringExpense={handleEditRecurringExpense}
+            onDeleteRecurringExpense={handleDeleteRecurringExpense}
             onUpdateStartingPoint={handleUpdateStartingPoint}
             onUpdateCreditCardSettings={handleUpdateCreditCardSettings}
           />

@@ -31,6 +31,8 @@ export function SpreadsheetTab({
   onAddTransaction,
   onEditTransaction,
   onDeleteTransaction,
+  onEditRecurringExpense,
+  onDeleteRecurringExpense,
   onUpdateStartingPoint,
   onUpdateCreditCardSettings
 }) {
@@ -178,6 +180,18 @@ export function SpreadsheetTab({
     setModalOpen(true)
   }
 
+  // Open Edit for a recurring expense
+  const handleOpenEditRecurring = (rec) => {
+    setEditingItem({ ...rec, isRecurring: true })
+    setTargetDay(rec.dayOfMonth)
+    setFormType('expense')
+    setFormDesc(rec.description)
+    setFormAmount(rec.amount.toString())
+    setFormCategory(rec.category || categories[0]?.id || 'alimentacao')
+    setFormPaymentMethod('pix')
+    setModalOpen(true)
+  }
+
   const handleSaveModal = (e) => {
     e.preventDefault()
     const amt = parseFloat(formAmount)
@@ -186,7 +200,15 @@ export function SpreadsheetTab({
     const dateStr = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(targetDay).padStart(2, '0')}`
     const isCard = formPaymentMethod === 'credit_card'
 
-    if (editingItem) {
+    if (editingItem?.isRecurring) {
+      onEditRecurringExpense?.({
+        ...editingItem,
+        description: formDesc.trim(),
+        amount: amt,
+        dayOfMonth: parseInt(targetDay, 10),
+        category: formCategory
+      })
+    } else if (editingItem) {
       onEditTransaction({
         ...editingItem,
         date: dateStr,
@@ -269,6 +291,8 @@ export function SpreadsheetTab({
       monthTotalRec += sumRecurring
     }
 
+    const totalDayOut = effectiveExpense + sumRecurring
+
     rows.push({
       day,
       weekDay,
@@ -287,21 +311,22 @@ export function SpreadsheetTab({
       effectiveExpense,
       isUsingGoal,
       sumRecurring,
+      totalDayOut,
       saldo: isFromStartingDateOnwards ? runningBalance : null
     })
   }
 
+  const monthTotalOut = monthTotalExp + monthTotalRec
   const activeDayRow = selectedDayDetails ? rows.find(r => r.day === selectedDayDetails) : null
 
   // Export spreadsheet as CSV
   const handleExportCSV = () => {
-    let csv = `Dia,Entradas,Gastos Diários,Saídas Recorrentes,Saldo\n`
+    let csv = `Dia,Entradas,Saídas,Saldo\n`
     for (const r of rows) {
       const inVal = r.sumIncomes > 0 ? r.sumIncomes : 0
-      const expVal = r.effectiveExpense > 0 ? r.effectiveExpense : 0
-      const recVal = r.sumRecurring > 0 ? r.sumRecurring : 0
+      const outVal = r.totalDayOut > 0 ? r.totalDayOut : 0
       const salVal = r.saldo !== null ? r.saldo.toFixed(2) : ''
-      csv += `"${r.day}","${inVal}","${expVal}","${recVal}","${salVal}"\n`
+      csv += `"${r.day}","${inVal}","${outVal}","${salVal}"\n`
     }
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
@@ -584,38 +609,38 @@ export function SpreadsheetTab({
         )}
       </div>
 
-      {/* Excel Spreadsheet Table */}
+      {/* Excel Spreadsheet Table (Consolidado: Dia | Entradas | Saídas | Saldo) */}
       <div className="bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse font-sans text-xs">
+        <div className="w-full">
+          <table className="w-full table-fixed text-left border-collapse font-sans text-xs">
             {/* Header com o Mês centralizado */}
             <thead>
               <tr className="bg-slate-950 border-b border-slate-800">
                 <th
-                  colSpan={5}
-                  className="py-3 px-4 text-center font-bold text-base text-white tracking-wide uppercase bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border-b border-slate-800"
+                  colSpan={4}
+                  className="py-3 px-4 text-center font-bold text-sm sm:text-base text-white tracking-wide uppercase bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border-b border-slate-800"
                 >
                   {capitalizedMonth} / {selectedYear}
                 </th>
               </tr>
-              <tr className="bg-slate-950/80 border-b border-slate-700 text-slate-300 uppercase tracking-wider font-semibold text-[11px]">
-                <th className="sticky left-0 bg-slate-950 py-3 px-3 text-center w-24 border-r border-slate-800 z-20 shadow-[2px_0_6px_rgba(0,0,0,0.5)]">Dia</th>
-                <th className="py-3 px-4 w-1/4 border-r border-slate-800 text-right min-w-[130px]">Entrada</th>
-                <th className="py-3 px-4 w-1/4 border-r border-slate-800 text-right min-w-[140px]">Gastos diários</th>
-                <th className="py-3 px-4 w-1/4 border-r border-slate-800 text-right min-w-[150px]">Saídas recorrentes</th>
-                <th className="py-3 px-4 text-right w-36 min-w-[130px]">Saldo</th>
+              <tr className="bg-slate-950/80 border-b border-slate-700 text-slate-300 uppercase tracking-wider font-semibold text-[10px] sm:text-[11px]">
+                <th className="py-2.5 px-1 sm:px-3 text-center w-[20%] sm:w-20 border-r border-slate-800">Dia</th>
+                <th className="py-2.5 px-2 sm:px-4 w-[26%] sm:w-1/4 border-r border-slate-800 text-right">Entradas</th>
+                <th className="py-2.5 px-2 sm:px-4 w-[27%] sm:w-1/4 border-r border-slate-800 text-right text-rose-400">Saídas</th>
+                <th className="py-2.5 px-2 sm:px-4 w-[27%] sm:w-1/4 text-right">Saldo</th>
               </tr>
             </thead>
 
             <tbody className="divide-y divide-slate-800/80 font-mono">
               {rows.map((row) => {
                 const hasIncomes = row.sumIncomes > 0
-                const hasRecurring = row.sumRecurring > 0
+                const hasOut = row.totalDayOut > 0
 
                 return (
                   <tr
                     key={row.day}
-                    className={`transition group ${
+                    onClick={() => setSelectedDayDetails(row.day)}
+                    className={`transition group cursor-pointer ${
                       row.isStartingDate
                         ? 'bg-indigo-950/50 ring-2 ring-inset ring-indigo-500'
                         : row.isToday
@@ -627,10 +652,9 @@ export function SpreadsheetTab({
                         : 'hover:bg-slate-800/30'
                     }`}
                   >
-                    {/* Coluna 1: Dia (Sticky para Navegação Mobile) */}
+                    {/* Coluna 1: Dia */}
                     <td
-                      onClick={() => setSelectedDayDetails(row.day)}
-                      className={`sticky left-0 py-2.5 px-3 text-center border-r border-slate-800 font-bold whitespace-nowrap cursor-pointer z-10 shadow-[2px_0_6px_rgba(0,0,0,0.5)] ${
+                      className={`py-2 px-1 sm:px-2.5 text-center border-r border-slate-800 font-bold whitespace-nowrap select-none ${
                         row.isStartingDate
                           ? 'bg-indigo-950 text-white'
                           : row.isToday
@@ -641,11 +665,11 @@ export function SpreadsheetTab({
                       }`}
                       title={row.isStartingDate ? 'Ponto de Partida do seu Saldo' : 'Clique para ver os lançamentos deste dia'}
                     >
-                      <div className="flex items-center justify-center space-x-1.5">
+                      <div className="flex items-center justify-center space-x-1">
                         {row.isStartingDate && (
-                          <Flag className="w-3.5 h-3.5 text-indigo-400 shrink-0" title="Ponto de partida" />
+                          <Flag className="w-3 h-3 text-indigo-400 shrink-0" title="Ponto de partida" />
                         )}
-                        <span className={`inline-block px-1.5 py-0.5 rounded text-xs ${
+                        <span className={`inline-block px-1.5 py-0.5 rounded text-[11px] sm:text-xs ${
                           row.isStartingDate
                             ? 'bg-indigo-600 text-white font-black shadow-md'
                             : row.isToday
@@ -654,115 +678,77 @@ export function SpreadsheetTab({
                         }`}>
                           {row.day}
                         </span>
-                        <span className="text-[10px] text-slate-500 font-normal uppercase">
+                        <span className="text-[9px] sm:text-[10px] text-slate-500 font-normal uppercase">
                           {row.weekDay}
                         </span>
                       </div>
                     </td>
 
-                    {/* Coluna 2: Entrada (Apenas Consolidado) */}
+                    {/* Coluna 2: Entradas (Consolidado: Manuais + Recorrentes) */}
                     <td
-                      onClick={() => setSelectedDayDetails(row.day)}
-                      className="py-2.5 px-4 border-r border-slate-800 text-right cursor-pointer hover:bg-emerald-500/5 transition group/cell"
-                      title="Clique para ver a soma e detalhes das entradas"
+                      className="py-2 px-2 sm:px-4 border-r border-slate-800 text-right hover:bg-emerald-500/5 transition truncate"
+                      title="Clique para ver detalhes das entradas"
                     >
                       {hasIncomes ? (
-                        <div className="flex items-center justify-end space-x-1.5">
-                          {row.dayIncomes.length > 1 && (
-                            <span className="text-[10px] px-1 py-0.2 rounded bg-emerald-500/10 text-emerald-400 font-sans border border-emerald-500/20">
-                              {row.dayIncomes.length} itens
-                            </span>
-                          )}
-                          <span className="font-semibold text-emerald-400">
-                            +{formatCurrency(row.sumIncomes)}
-                          </span>
-                        </div>
+                        <span className="font-semibold text-emerald-400 font-mono text-[11px] sm:text-xs">
+                          +{formatCurrency(row.sumIncomes)}
+                        </span>
                       ) : (
-                        <span className="text-slate-600 font-sans">—</span>
+                        <span className="text-slate-600 font-sans text-[11px]">—</span>
                       )}
                     </td>
 
-                    {/* Coluna 3: Gastos diários (Consolidado: Real ou Meta apenas após data de partida) */}
+                    {/* Coluna 3: Saídas (Consolidado: Gastos Diários + Cartão + Recorrentes) */}
                     <td
-                      onClick={() => setSelectedDayDetails(row.day)}
-                      className={`py-2.5 px-4 border-r border-slate-800 text-right cursor-pointer transition group/cell ${
-                        row.isUsingGoal
+                      className={`py-2 px-2 sm:px-4 border-r border-slate-800 text-right transition truncate ${
+                        row.isUsingGoal && row.sumRecurring === 0
                           ? 'hover:bg-indigo-500/5'
                           : 'hover:bg-rose-500/5'
                       }`}
-                      title={row.isUsingGoal ? 'Valor estimado da meta diária. Clique para registrar o gasto real.' : 'Clique para ver a soma de cada gasto deste dia'}
+                      title="Clique para ver detalhes dos gastos e contas"
                     >
                       {row.isBeforeStartingDate && !row.dayExpenses.length ? (
-                        <span className="text-slate-600 font-sans">—</span>
-                      ) : (
-                        <div className="flex items-center justify-end space-x-1.5">
-                          {row.isUsingGoal ? (
+                        <span className="text-slate-600 font-sans text-[11px]">—</span>
+                      ) : hasOut ? (
+                        <div className="flex items-center justify-end space-x-1">
+                          {row.isUsingGoal && row.sumRecurring === 0 ? (
                             <>
-                              <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-500/10 text-indigo-400 font-sans border border-indigo-500/20">
+                              <span className="text-[9px] px-1 py-0.2 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hidden sm:inline">
                                 meta
                               </span>
-                              <span className="font-medium text-slate-400 font-mono">
-                                -{formatCurrency(row.effectiveExpense)}
+                              <span className="font-medium text-slate-400 font-mono text-[11px] sm:text-xs">
+                                -{formatCurrency(row.totalDayOut)}
                               </span>
                             </>
                           ) : (
                             <>
                               {row.hasCardExpense && (
-                                <span
-                                  className="text-[10px] px-1.5 py-0.2 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20 font-sans flex items-center gap-1"
-                                  title={viewMode === 'settlement' ? 'Inclui gastos no cartão liquidados nesta data' : `Contém compras no cartão (Fatura d. ${creditCardSettings?.dueDay || 25})`}
-                                >
-                                  <CreditCard className="w-2.5 h-2.5" />
-                                  <span>d.{creditCardSettings?.dueDay || 25}</span>
-                                </span>
+                                <CreditCard className="w-3 h-3 text-purple-400 shrink-0 hidden sm:inline" title="Contém compras no cartão" />
                               )}
-                              {row.dayExpenses.length > 1 && (
-                                <span className="text-[10px] px-1.5 py-0.2 rounded bg-rose-500/10 text-rose-400 font-sans border border-rose-500/20">
-                                  {row.dayExpenses.length} gastos
-                                </span>
+                              {row.sumRecurring > 0 && (
+                                <span className="text-[9px] text-amber-400 font-mono hidden sm:inline" title="Contém conta fixa">📌</span>
                               )}
-                              <span className="font-semibold text-rose-400">
-                                -{formatCurrency(row.effectiveExpense)}
+                              <span className="font-semibold text-rose-400 font-mono text-[11px] sm:text-xs">
+                                -{formatCurrency(row.totalDayOut)}
                               </span>
                             </>
                           )}
                         </div>
-                      )}
-                    </td>
-
-                    {/* Coluna 4: Saídas recorrentes (Apenas Consolidado) */}
-                    <td
-                      onClick={() => setSelectedDayDetails(row.day)}
-                      className="py-2.5 px-4 border-r border-slate-800 text-right cursor-pointer hover:bg-amber-500/5 transition group/cell"
-                      title="Clique para ver as contas fixas agendadas deste dia"
-                    >
-                      {hasRecurring ? (
-                        <div className="flex items-center justify-end space-x-1.5">
-                          {row.dayRecurring.length > 1 && (
-                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-400 font-sans border border-amber-500/20">
-                              {row.dayRecurring.length} contas
-                            </span>
-                          )}
-                          <span className="font-semibold text-amber-400">
-                            -{formatCurrency(row.sumRecurring)}
-                          </span>
-                        </div>
                       ) : (
-                        <span className="text-slate-600 font-sans">—</span>
+                        <span className="text-slate-600 font-sans text-[11px]">R$ 0,00</span>
                       )}
                     </td>
 
-                    {/* Coluna 5: Saldo (Só projeta do Ponto de Partida em diante) */}
+                    {/* Coluna 4: Saldo Acumulado */}
                     <td
-                      onClick={() => setSelectedDayDetails(row.day)}
-                      className="py-2.5 px-4 text-right font-bold font-mono whitespace-nowrap cursor-pointer hover:bg-slate-800/40"
+                      className="py-2 px-2 sm:px-4 text-right font-bold font-mono truncate hover:bg-slate-800/40"
                     >
                       {row.saldo !== null ? (
-                        <span className={row.saldo >= 0 ? 'text-slate-100' : 'text-rose-400'}>
+                        <span className={`text-[11px] sm:text-xs ${row.saldo >= 0 ? 'text-slate-100' : 'text-rose-400'}`}>
                           {formatCurrency(row.saldo)}
                         </span>
                       ) : (
-                        <span className="text-slate-600 font-sans text-[11px]">anterior</span>
+                        <span className="text-slate-600 font-sans text-[10px]">anterior</span>
                       )}
                     </td>
                   </tr>
@@ -773,19 +759,16 @@ export function SpreadsheetTab({
             {/* Footer Totalizador estilo Excel */}
             <tfoot>
               <tr className="bg-slate-950 border-t-2 border-slate-700 font-bold text-xs text-slate-200">
-                <td className="sticky left-0 bg-slate-950 py-3 px-3 text-center border-r border-slate-800 uppercase font-sans z-10 shadow-[2px_0_6px_rgba(0,0,0,0.5)]">
+                <td className="py-2.5 px-1 sm:px-3 text-center border-r border-slate-800 uppercase font-sans text-[10px] sm:text-[11px]">
                   Total
                 </td>
-                <td className="py-3 px-4 border-r border-slate-800 text-right text-emerald-400 font-mono">
+                <td className="py-2.5 px-2 sm:px-4 border-r border-slate-800 text-right text-emerald-400 font-mono text-xs">
                   +{formatCurrency(monthTotalIn)}
                 </td>
-                <td className="py-3 px-4 border-r border-slate-800 text-right text-rose-400 font-mono">
-                  -{formatCurrency(monthTotalExp)}
+                <td className="py-2.5 px-2 sm:px-4 border-r border-slate-800 text-right text-rose-400 font-mono text-xs">
+                  -{formatCurrency(monthTotalOut)}
                 </td>
-                <td className="py-3 px-4 border-r border-slate-800 text-right text-amber-400 font-mono">
-                  -{formatCurrency(monthTotalRec)}
-                </td>
-                <td className="py-3 px-4 text-right text-emerald-400 font-mono text-sm">
+                <td className="py-2.5 px-2 sm:px-4 text-right text-emerald-400 font-mono text-xs sm:text-sm">
                   {runningBalance !== null ? formatCurrency(runningBalance) : '—'}
                 </td>
               </tr>
@@ -1034,8 +1017,35 @@ export function SpreadsheetTab({
                       key={rec.id}
                       className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800 text-xs"
                     >
-                      <span className="font-medium text-slate-200">{rec.description}</span>
-                      <span className="font-bold font-mono text-amber-400">-{formatCurrency(rec.amount)}</span>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-medium text-slate-200">{rec.description}</span>
+                        <span className="text-[10px] text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.2 rounded font-mono">
+                          Conta Fixa
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-bold font-mono text-amber-400">-{formatCurrency(rec.amount)}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditRecurring(rec)}
+                          className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+                          title="Editar conta fixa"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (confirm(`Remover conta fixa "${rec.description}"?`)) {
+                              onDeleteRecurringExpense?.(rec.id)
+                            }
+                          }}
+                          className="p-1 rounded text-slate-500 hover:text-rose-400 transition cursor-pointer"
+                          title="Excluir"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1056,11 +1066,17 @@ export function SpreadsheetTab({
 
       {/* MODAL ADICIONAR / EDITAR TRANSAÇÃO */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl p-6 space-y-4">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-sm animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl p-5 sm:p-6 space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-slate-800">
               <h3 className="text-base font-bold text-white flex items-center space-x-2">
-                <span>{editingItem ? 'Editar Lançamento' : `Novo Lançamento - Dia ${targetDay} de ${capitalizedMonth}`}</span>
+                <span>
+                  {editingItem?.isRecurring
+                    ? `Editar Conta Fixa (Todo dia ${targetDay})`
+                    : editingItem
+                    ? 'Editar Lançamento'
+                    : `Novo Lançamento - Dia ${targetDay} de ${capitalizedMonth}`}
+                </span>
               </h3>
               <button onClick={() => setModalOpen(false)} className="text-slate-400 hover:text-white cursor-pointer">
                 ✕
@@ -1181,8 +1197,12 @@ export function SpreadsheetTab({
                   <button
                     type="button"
                     onClick={() => {
-                      if (confirm('Deseja excluir este lançamento?')) {
-                        onDeleteTransaction(editingItem.id)
+                      if (confirm('Deseja excluir este item?')) {
+                        if (editingItem.isRecurring) {
+                          onDeleteRecurringExpense?.(editingItem.id)
+                        } else {
+                          onDeleteTransaction(editingItem.id)
+                        }
                         setModalOpen(false)
                       }
                     }}
