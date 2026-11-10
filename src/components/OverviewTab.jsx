@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   Calendar,
   Clock,
@@ -8,7 +8,8 @@ import {
   Sparkles,
   Coins,
   ShieldCheck,
-  Percent
+  Percent,
+  TrendingUp
 } from 'lucide-react'
 import {
   PieChart,
@@ -18,10 +19,16 @@ import {
   Tooltip,
   BarChart,
   Bar,
+  AreaChart,
+  Area,
   XAxis,
   YAxis
 } from 'recharts'
-import { formatCurrency, getMonthInfo } from '../utils/financialMath'
+import {
+  formatCurrency,
+  getMonthInfo,
+  simulateBalanceEvolution
+} from '../utils/financialMath'
 import { CATEGORIES } from '../utils/categories'
 
 export function OverviewTab({
@@ -32,31 +39,73 @@ export function OverviewTab({
   onOpenScenarioModal
 }) {
   const { monthName, daysRemaining, today, totalDays } = getMonthInfo()
+  const [projectionHorizon, setProjectionHorizon] = useState('1a') // '6m' | '1a' | '3a' | 'fim_mes'
 
-  // Generate day-by-day projection for remaining days of the month
-  const projectionChartData = []
-  let runningBalance = data.currentBalance
+  const fixedMonthlyExpenses = (data.recurringExpenses || []).reduce((sum, item) => sum + item.amount, 0)
+  const fixedMonthlyIncomes = (data.recurringIncomes || []).reduce((sum, item) => sum + item.amount, 0)
 
-  for (let d = today; d <= totalDays; d++) {
-    // Check if any recurring bills fall on day d
-    const billsOnDay = data.recurringExpenses
-      .filter(item => item.dayOfMonth === d)
-      .reduce((sum, item) => sum + item.amount, 0)
+  // Compute projection chart data based on selected horizon
+  let projectionChartData = []
+  let chartSubtitle = ''
 
-    const incomesOnDay = data.recurringIncomes
-      .filter(item => item.dayOfMonth === d)
-      .reduce((sum, item) => sum + item.amount, 0)
+  if (projectionHorizon === 'fim_mes') {
+    let runningBalance = data.currentBalance
+    chartSubtitle = `Projeção até o fim do mês considerando contas fixas e meta de ${formatCurrency(data.dailyBudgetGoal)}/dia.`
 
-    // Daily variable burn
-    const dailyVariable = d > today ? data.dailyBudgetGoal : 0
-    runningBalance = runningBalance + incomesOnDay - billsOnDay - dailyVariable
+    for (let d = today; d <= totalDays; d++) {
+      const billsOnDay = data.recurringExpenses
+        .filter(item => item.dayOfMonth === d)
+        .reduce((sum, item) => sum + item.amount, 0)
 
-    projectionChartData.push({
-      dia: `Dia ${d}`,
-      saldo: Math.round(runningBalance),
-      contas: billsOnDay
+      const incomesOnDay = data.recurringIncomes
+        .filter(item => item.dayOfMonth === d)
+        .reduce((sum, item) => sum + item.amount, 0)
+
+      const dailyVariable = d > today ? data.dailyBudgetGoal : 0
+      runningBalance = runningBalance + incomesOnDay - billsOnDay - dailyVariable
+
+      projectionChartData.push({
+        label: `Dia ${d}`,
+        saldo: Math.round(runningBalance),
+        rendimento: 0
+      })
+    }
+  } else {
+    const horizonMonths = projectionHorizon === '6m' ? 6 : projectionHorizon === '3a' ? 36 : 12
+    const horizonLabel = projectionHorizon === '6m' ? '6 meses' : projectionHorizon === '3a' ? '3 anos (36 meses)' : '1 ano (12 meses)'
+    chartSubtitle = `Projeção para os próximos ${horizonLabel} considerando entradas de ${formatCurrency(fixedMonthlyIncomes)}/mês, fixos de ${formatCurrency(fixedMonthlyExpenses)}/mês, meta de ${formatCurrency(data.dailyBudgetGoal)}/dia e rendimento do CDI.`
+
+    const sim = simulateBalanceEvolution({
+      startBalance: data.currentBalance,
+      monthlyFixedExpenses: fixedMonthlyExpenses,
+      dailyBudgetGoal: data.dailyBudgetGoal,
+      monthlyOtherIncomes: fixedMonthlyIncomes,
+      includeCDI: true,
+      maxMonths: horizonMonths
+    })
+
+    const now = new Date()
+    projectionChartData = sim.history.map((h) => {
+      let label = 'Hoje'
+      if (h.month > 0) {
+        const d = new Date(now.getFullYear(), now.getMonth() + h.month, 1)
+        const shortMonth = d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')
+        const shortYear = d.getFullYear().toString().slice(-2)
+        label = `${shortMonth.charAt(0).toUpperCase() + shortMonth.slice(1)}/${shortYear}`
+      }
+      return {
+        label,
+        saldo: h.balance,
+        rendimento: h.cdiYield,
+        fluxo: h.netFlow
+      }
     })
   }
+
+  const startBal = data.currentBalance
+  const endBal = projectionChartData[projectionChartData.length - 1]?.saldo ?? startBal
+  const balDiff = endBal - startBal
+  const isGrowing = balDiff >= 0
 
   // Category breakdown for pie chart
   const categoryTotals = {}
@@ -247,30 +296,82 @@ export function OverviewTab({
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Chart 1: Projeção de Saldo até o Fim do Mês */}
+        {/* Chart 1: Evolução Projetada do Saldo (Dropdown: 6m, 1a, 3a) */}
         <div className="lg:col-span-2 bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h3 className="text-base font-semibold text-white">Evolução Projetada do Saldo</h3>
-              <p className="text-xs text-slate-400">Como o saldo se comportará até o último dia do mês considerando contas fixas e o gasto diário de {formatCurrency(data.dailyBudgetGoal)}/dia</p>
+              <div className="flex items-center space-x-2">
+                <h3 className="text-base font-semibold text-white">Evolução Projetada do Saldo</h3>
+                <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
+                  isGrowing
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                    : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                }`}>
+                  {isGrowing ? `+${formatCurrency(balDiff)}` : `-${formatCurrency(Math.abs(balDiff))}`}
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-1 leading-relaxed">{chartSubtitle}</p>
             </div>
-            <div className="text-xs px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
-              {daysRemaining} dias restantes
+
+            {/* Dropdown de Seleção de Horizonte */}
+            <div className="flex items-center space-x-2 self-start sm:self-auto shrink-0">
+              <label htmlFor="horizon-select" className="text-xs text-slate-400 font-medium hidden sm:inline">
+                Horizonte:
+              </label>
+              <select
+                id="horizon-select"
+                value={projectionHorizon}
+                onChange={e => setProjectionHorizon(e.target.value)}
+                className="bg-slate-950 border border-slate-700 text-white text-xs font-semibold rounded-xl px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer shadow-sm"
+              >
+                <option value="6m">6 Meses (6m)</option>
+                <option value="1a">1 Ano (1a)</option>
+                <option value="3a">3 Anos (3a)</option>
+                <option value="fim_mes">Fim do Mês Atual</option>
+              </select>
             </div>
           </div>
 
-          <div className="h-64 w-full">
+          <div className="h-64 w-full pt-1">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={projectionChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <XAxis dataKey="dia" stroke="#64748b" fontSize={11} tickLine={false} />
-                <YAxis stroke="#64748b" fontSize={11} tickLine={false} tickFormatter={val => `R$${(val/1000).toFixed(0)}k`} />
-                <Tooltip
-                  formatter={(value) => [formatCurrency(value), 'Saldo Projetado']}
-                  labelStyle={{ color: '#94a3b8' }}
-                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px' }}
+              <AreaChart data={projectionChartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="balanceGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={isGrowing ? "#10b981" : "#3b82f6"} stopOpacity={0.35}/>
+                    <stop offset="95%" stopColor={isGrowing ? "#10b981" : "#3b82f6"} stopOpacity={0.0}/>
+                  </linearGradient>
+                </defs>
+                <XAxis
+                  dataKey="label"
+                  stroke="#64748b"
+                  fontSize={11}
+                  tickLine={false}
+                  interval={projectionHorizon === '3a' ? 5 : projectionHorizon === '1a' ? 1 : 0}
                 />
-                <Bar dataKey="saldo" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-              </BarChart>
+                <YAxis
+                  stroke="#64748b"
+                  fontSize={11}
+                  tickLine={false}
+                  tickFormatter={val => `R$${(val/1000).toFixed(0)}k`}
+                />
+                <Tooltip
+                  formatter={(value, name) => {
+                    if (name === 'saldo') return [formatCurrency(value), 'Saldo Projetado']
+                    if (name === 'rendimento') return [formatCurrency(value), 'Rendimento CDI no Mês']
+                    return [formatCurrency(value), name]
+                  }}
+                  labelStyle={{ color: '#94a3b8' }}
+                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)' }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="saldo"
+                  stroke={isGrowing ? "#10b981" : "#3b82f6"}
+                  strokeWidth={2.5}
+                  fillOpacity={1}
+                  fill="url(#balanceGrad)"
+                />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
