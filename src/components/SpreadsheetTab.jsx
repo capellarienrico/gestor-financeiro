@@ -42,9 +42,6 @@ export function SpreadsheetTab({
   const [selectedYear, setSelectedYear] = useState(todayDate.getFullYear())
   const [selectedMonth, setSelectedMonth] = useState(todayDate.getMonth())
 
-  // View Mode: 'purchase' (Data da Compra) vs 'settlement' (Data de Liquidação / Fatura)
-  const [viewMode, setViewMode] = useState('purchase')
-
   // Day Details / Breakdown Modal state
   const [selectedDayDetails, setSelectedDayDetails] = useState(null)
 
@@ -57,10 +54,6 @@ export function SpreadsheetTab({
   const [formAmount, setFormAmount] = useState('')
   const [formCategory, setFormCategory] = useState('alimentacao')
   const [formPaymentMethod, setFormPaymentMethod] = useState('pix')
-
-  // Credit Card Invoice Conciliator state
-  const [bankInvoiceInput, setBankInvoiceInput] = useState('')
-  const [showInvoiceConciliator, setShowInvoiceConciliator] = useState(false)
 
   const dailyBudgetGoal = data.dailyBudgetGoal || 65
   const startingPoint = data.startingPoint || { date: todayIso, balance: data.currentBalance || 30000 }
@@ -92,69 +85,8 @@ export function SpreadsheetTab({
   const isCurrentActualMonth = todayDate.getFullYear() === selectedYear && todayDate.getMonth() === selectedMonth
   const todayNumber = todayDate.getDate()
 
-  // Map transactions to calculate credit card invoice due dates and effective date according to viewMode
-  const effectiveTransactions = (data.transactions || []).map(t => {
-    const isCard = isCreditCardTransaction(t)
-    const dueDate = isCard
-      ? calculateCreditCardDueDate(t.date, creditCardSettings?.closingDay || 15, creditCardSettings?.dueDay || 25)
-      : t.date
-
-    const effectiveDate = (viewMode === 'settlement' && isCard) ? dueDate : t.date
-
-    return {
-      ...t,
-      isCard,
-      calculatedDueDate: dueDate,
-      effectiveDate
-    }
-  })
-
-  // Filter transactions for this month based on effective date
-  const monthTransactions = effectiveTransactions.filter(t => t.effectiveDate.startsWith(currentMonthKey))
-
-  // Credit Card Invoice Conciliator Calculations for active month
-  const invoiceDueDay = creditCardSettings?.dueDay || 25
-  const invoiceTargetDate = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(invoiceDueDay).padStart(2, '0')}`
-
-  const invoiceCardExpenses = (effectiveTransactions || []).filter(t => {
-    return t.type === 'expense' && isCreditCardTransaction(t) && t.calculatedDueDate === invoiceTargetDate
-  })
-  const invoiceCardTotal = invoiceCardExpenses.reduce((acc, t) => acc + t.amount, 0)
-  const parsedBankTotal = parseFloat(bankInvoiceInput.replace(',', '.')) || 0
-  const invoiceDiff = parsedBankTotal - invoiceCardTotal
-
-  const handleAddInvoiceAdjustment = () => {
-    if (invoiceDiff <= 0.01) return
-    onAddTransaction({
-      id: 'tx-card-adj-' + Date.now(),
-      date: invoiceTargetDate,
-      description: 'Ajuste de Fatura: Gastos não anotados no cartão',
-      amount: parseFloat(invoiceDiff.toFixed(2)),
-      type: 'expense',
-      category: 'outros',
-      source: 'Cartão de Crédito',
-      paymentMethod: 'credit_card'
-    })
-    setBankInvoiceInput('')
-    alert(`Ajuste de ${formatCurrency(invoiceDiff)} lançado com sucesso na fatura do dia ${invoiceDueDay}!`)
-  }
-
-  const handleDiscountInvoiceAdjustment = () => {
-    if (invoiceDiff >= -0.01) return
-    const diffAbs = Math.abs(invoiceDiff)
-    onAddTransaction({
-      id: 'tx-card-disc-' + Date.now(),
-      date: invoiceTargetDate,
-      description: 'Ajuste de Fatura: Desconto / Diferença de conciliação',
-      amount: parseFloat(diffAbs.toFixed(2)),
-      type: 'income',
-      category: 'outros_in',
-      source: 'Cartão de Crédito',
-      paymentMethod: 'credit_card'
-    })
-    setBankInvoiceInput('')
-    alert(`Ajuste redutor de ${formatCurrency(diffAbs)} aplicado com sucesso à fatura!`)
-  }
+  // Filter transactions directly for this month by date
+  const monthTransactions = (data.transactions || []).filter(t => t.date && t.date.startsWith(currentMonthKey))
 
   // Open Quick Add for a specific day
   const handleOpenQuickAdd = (day, defaultType = 'expense') => {
@@ -176,7 +108,10 @@ export function SpreadsheetTab({
     setFormDesc(tx.description)
     setFormAmount(tx.amount.toString())
     setFormCategory(tx.category)
-    setFormPaymentMethod(isCreditCardTransaction(tx) ? 'credit_card' : (tx.paymentMethod || 'pix'))
+    const m = (tx.paymentMethod || tx.source || 'pix').toLowerCase()
+    if (m.includes('vr')) setFormPaymentMethod('vr')
+    else if (m.includes('deb') || m.includes('déb')) setFormPaymentMethod('debito')
+    else setFormPaymentMethod('pix')
     setModalOpen(true)
   }
 
@@ -198,7 +133,7 @@ export function SpreadsheetTab({
     if (!formDesc.trim() || isNaN(amt) || amt <= 0) return
 
     const dateStr = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(targetDay).padStart(2, '0')}`
-    const isCard = formPaymentMethod === 'credit_card'
+    const paymentLabel = formPaymentMethod === 'vr' ? 'VR' : formPaymentMethod === 'debito' ? 'Débito' : 'Pix'
 
     if (editingItem?.isRecurring) {
       onEditRecurringExpense?.({
@@ -216,8 +151,8 @@ export function SpreadsheetTab({
         amount: amt,
         type: formType,
         category: formCategory,
-        paymentMethod: isCard ? 'Cartão de Crédito' : 'À Vista / Pix',
-        source: isCard ? 'Cartão de Crédito' : (editingItem.source || 'Planilha')
+        paymentMethod: formPaymentMethod,
+        source: paymentLabel
       })
     } else {
       onAddTransaction({
@@ -227,8 +162,8 @@ export function SpreadsheetTab({
         amount: amt,
         type: formType,
         category: formCategory,
-        paymentMethod: isCard ? 'Cartão de Crédito' : 'À Vista / Pix',
-        source: isCard ? 'Cartão de Crédito' : 'Planilha'
+        paymentMethod: formPaymentMethod,
+        source: paymentLabel
       })
     }
 
@@ -252,10 +187,10 @@ export function SpreadsheetTab({
     const isBeforeStartingDate = dateKey < startingPoint.date
     const isFromStartingDateOnwards = dateKey >= startingPoint.date
 
-    const dayTxs = monthTransactions.filter(t => t.effectiveDate === dateKey)
+    const dayTxs = monthTransactions.filter(t => t.date === dateKey)
     const dayIncomes = dayTxs.filter(t => t.type === 'income')
     const dayExpenses = dayTxs.filter(t => t.type === 'expense')
-    const hasCardExpense = dayExpenses.some(t => t.isCard)
+    const hasCardExpense = dayExpenses.some(t => (t.paymentMethod || t.source || '').toLowerCase().includes('cart'))
 
     const dayRecurring = data.recurringExpenses.filter(r => r.dayOfMonth === day)
     const dayRecurringIn = data.recurringIncomes.filter(r => r.dayOfMonth === day)
@@ -434,37 +369,6 @@ export function SpreadsheetTab({
           </button>
         </div>
 
-        {/* View Mode Toggle: Data da Compra vs Data de Liquidação / Fatura */}
-        <div className="flex items-center bg-stone-50 border border-stone-200 rounded-xl p-1">
-          <button
-            onClick={() => setViewMode('purchase')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition cursor-pointer ${
-              viewMode === 'purchase'
-                ? 'bg-stone-900 text-white shadow-sm'
-                : 'text-stone-600 hover:text-stone-900'
-            }`}
-            title="Exibe os gastos no dia em que a compra foi efetuada"
-          >
-            <Calendar className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Data da</span>
-            <span>Compra</span>
-          </button>
-
-          <button
-            onClick={() => setViewMode('settlement')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition cursor-pointer ${
-              viewMode === 'settlement'
-                ? 'bg-purple-700 text-white shadow-sm'
-                : 'text-stone-600 hover:text-stone-900'
-            }`}
-            title="Exibe gastos no cartão no dia do vencimento da fatura (quando o dinheiro sai da conta)"
-          >
-            <CreditCard className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Data de</span>
-            <span>Liquidação (Fatura)</span>
-          </button>
-        </div>
-
         {/* Quick Actions */}
         <div className="flex items-center space-x-2">
           <button
@@ -476,137 +380,6 @@ export function SpreadsheetTab({
             <span>Exportar Planilha (CSV)</span>
           </button>
         </div>
-      </div>
-
-      {/* Banner explicativo do modo de visualização */}
-      {viewMode === 'settlement' ? (
-        <div className="p-3.5 rounded-2xl bg-purple-50/80 border border-purple-200 text-xs text-purple-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shadow-sm">
-          <div className="flex items-center space-x-2">
-            <CreditCard className="w-4 h-4 text-purple-700 shrink-0" />
-            <span>
-              <strong>Visão por Data de Liquidação / Fatura Ativa:</strong> Compras feitas no Cartão de Crédito são contabilizadas no dia do vencimento (<strong className="text-purple-900">dia {creditCardSettings?.dueDay || 25}</strong>), após o fechamento (<strong className="text-purple-900">dia {creditCardSettings?.closingDay || 15}</strong>), para demonstrar a saída real de saldo.
-            </span>
-          </div>
-          <button
-            onClick={() => setViewMode('purchase')}
-            className="text-[11px] font-semibold text-purple-700 hover:text-purple-900 underline cursor-pointer shrink-0"
-          >
-            Voltar para Data da Compra
-          </button>
-        </div>
-      ) : (
-        <div className="px-4 py-2 rounded-xl bg-white border border-stone-200 text-[11px] text-stone-500 flex items-center justify-between shadow-sm">
-          <span className="flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5 text-stone-400" />
-            Visualizando por <strong>Data da Compra</strong>. Gastos no cartão exibem indicador da fatura prevista (<span className="text-purple-700 font-medium">d. {creditCardSettings?.dueDay || 25}</span>).
-          </span>
-          <button
-            onClick={() => setViewMode('settlement')}
-            className="text-purple-700 hover:text-purple-900 font-medium cursor-pointer ml-2 text-xs flex items-center gap-1"
-          >
-            <span>Ver quando o dinheiro sairá do saldo</span>
-            <span>&rarr;</span>
-          </button>
-        </div>
-      )}
-
-      {/* Card / Gaveta de Conciliação de Fatura */}
-      <div className="bg-purple-50/50 border border-purple-200/80 rounded-2xl p-4 shadow-sm space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-xl bg-purple-100 border border-purple-200 flex items-center justify-center text-purple-700 shrink-0">
-              <CreditCard className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h4 className="font-bold text-stone-900 text-sm">Fatura do Cartão &bull; {capitalizedMonth}</h4>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 border border-purple-200 font-medium">
-                  Vence dia {invoiceDueDay}
-                </span>
-              </div>
-              <p className="text-xs text-stone-600">
-                Anotado no App: <strong className="text-purple-800 font-mono">{formatCurrency(invoiceCardTotal)}</strong>
-                <span className="text-stone-500 ml-1.5">({invoiceCardExpenses.length} lançamentos no crédito)</span>
-              </p>
-            </div>
-          </div>
-
-          <button
-            onClick={() => setShowInvoiceConciliator(prev => !prev)}
-            className="px-3.5 py-2 rounded-xl bg-white hover:bg-stone-50 border border-purple-200 text-purple-700 text-xs font-semibold flex items-center justify-center space-x-1.5 transition cursor-pointer self-start sm:self-auto shadow-sm"
-          >
-            <span>{showInvoiceConciliator ? 'Fechar Conciliador' : 'Bater com a Fatura do Banco'}</span>
-            <span className="text-[10px]">{showInvoiceConciliator ? '▲' : '▼'}</span>
-          </button>
-        </div>
-
-        {showInvoiceConciliator && (
-          <div className="pt-3 border-t border-purple-200 grid grid-cols-1 md:grid-cols-3 gap-4 items-end animate-in fade-in duration-150">
-            <div>
-              <label className="text-[11px] font-semibold text-stone-600 block mb-1">
-                Valor Real Fechado no Banco (ex: Nubank):
-              </label>
-              <div className="flex items-center space-x-2 bg-white border border-purple-300 rounded-xl px-3 py-2">
-                <span className="text-xs text-stone-400 font-mono">R$</span>
-                <input
-                  type="number"
-                  step="0.01"
-                  inputMode="decimal"
-                  placeholder="Ex: 1850.00"
-                  value={bankInvoiceInput}
-                  onChange={e => setBankInvoiceInput(e.target.value)}
-                  className="w-full bg-transparent text-sm font-bold text-stone-900 placeholder-stone-400 focus:outline-none font-mono"
-                />
-              </div>
-            </div>
-
-            <div className="bg-white border border-purple-200 rounded-xl p-2.5 shadow-sm">
-              <span className="text-[10px] uppercase tracking-wider text-stone-500 font-bold block mb-0.5">Diferença / Esquecidos</span>
-              {parsedBankTotal > 0 ? (
-                <div className="flex items-center justify-between">
-                  <span className={`text-sm font-mono font-bold ${
-                    invoiceDiff > 0 ? 'text-amber-700' : invoiceDiff < 0 ? 'text-blue-700' : 'text-emerald-700'
-                  }`}>
-                    {invoiceDiff > 0 ? `+${formatCurrency(invoiceDiff)}` : formatCurrency(invoiceDiff)}
-                  </span>
-                  <span className="text-[10px] text-stone-500">
-                    {invoiceDiff > 0 ? 'não anotados' : invoiceDiff < 0 ? 'a mais no app' : '100% conciliado'}
-                  </span>
-                </div>
-              ) : (
-                <span className="text-xs text-stone-400">Digite o valor da fatura do banco</span>
-              )}
-            </div>
-
-            <div>
-              {invoiceDiff > 0.01 ? (
-                <button
-                  onClick={handleAddInvoiceAdjustment}
-                  className="w-full py-2.5 px-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center justify-center space-x-1.5 transition shadow-sm cursor-pointer"
-                  title="Gera um gasto avulso no dia do vencimento da fatura com a diferença"
-                >
-                  <span>+ Lançar {formatCurrency(invoiceDiff)} de Esquecidos</span>
-                </button>
-              ) : invoiceDiff < -0.01 ? (
-                <button
-                  onClick={handleDiscountInvoiceAdjustment}
-                  className="w-full py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center space-x-1.5 transition shadow-sm cursor-pointer"
-                  title="Gera uma entrada redutora para bater com o valor real"
-                >
-                  <span>Ajustar Diferença (-{formatCurrency(Math.abs(invoiceDiff))})</span>
-                </button>
-              ) : parsedBankTotal > 0 ? (
-                <div className="py-2.5 text-center text-xs text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200 rounded-xl">
-                  ✓ Fatura 100% conciliada com o banco!
-                </div>
-              ) : (
-                <div className="text-[11px] text-stone-500 text-center py-2">
-                  Permite ajustar compras não anotadas sem precisar caçar cada comprovante.
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Excel Spreadsheet Table (Consolidado: Dia | Entradas | Saídas | Saldo) */}
@@ -870,25 +643,12 @@ export function SpreadsheetTab({
                               <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }} />
                               <span className="font-medium text-stone-800">{exp.description}</span>
                               <span className="text-[10px] text-stone-500 font-sans">({cat.name})</span>
-                              {exp.isCard && (
-                                <span
-                                  className="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 font-sans inline-flex items-center gap-1 font-medium"
-                                  title={`Fechamento: dia ${creditCardSettings?.closingDay || 15} • Vencimento: ${exp.calculatedDueDate?.split('-').reverse().join('/')}`}
-                                >
-                                  <CreditCard className="w-3 h-3 text-purple-700" />
-                                  <span>Fatura d. {creditCardSettings?.dueDay || 25}</span>
+                              {(exp.paymentMethod || exp.source) && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-600 border border-stone-200 font-medium">
+                                  {exp.source || exp.paymentMethod}
                                 </span>
                               )}
                             </div>
-                            {exp.isCard && (
-                              <div className="text-[10px] text-stone-500 pl-4">
-                                {viewMode === 'settlement' ? (
-                                  <span>Compra realizada em {exp.date.split('-').reverse().join('/')} &bull; Liquidada nesta fatura</span>
-                                ) : (
-                                  <span>Compra efetuada hoje &bull; Vencerá na fatura de <strong className="text-purple-700 font-mono">{exp.calculatedDueDate?.split('-').reverse().join('/')}</strong></span>
-                                )}
-                              </div>
-                            )}
                           </div>
 
                           <div className="flex items-center space-x-2">
@@ -1152,43 +912,41 @@ export function SpreadsheetTab({
               {formType === 'expense' && (
                 <div>
                   <label className="text-xs text-stone-600 block mb-1">Forma de Pagamento:</label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-3 gap-2">
                     <button
                       type="button"
                       onClick={() => setFormPaymentMethod('pix')}
                       className={`py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center space-x-1 cursor-pointer transition ${
-                        formPaymentMethod !== 'credit_card'
+                        formPaymentMethod === 'pix'
                           ? 'bg-stone-900 text-white shadow-sm'
                           : 'bg-stone-100 text-stone-600 border border-stone-200 hover:text-stone-900'
                       }`}
                     >
-                      <span>Pix / À Vista / Conta</span>
+                      <span>Pix</span>
                     </button>
                     <button
                       type="button"
-                      onClick={() => setFormPaymentMethod('credit_card')}
-                      className={`py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 cursor-pointer transition ${
-                        formPaymentMethod === 'credit_card'
-                          ? 'bg-purple-700 text-white shadow-sm'
+                      onClick={() => setFormPaymentMethod('debito')}
+                      className={`py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center space-x-1 cursor-pointer transition ${
+                        formPaymentMethod === 'debito'
+                          ? 'bg-stone-900 text-white shadow-sm'
                           : 'bg-stone-100 text-stone-600 border border-stone-200 hover:text-stone-900'
                       }`}
                     >
-                      <CreditCard className="w-3.5 h-3.5" />
-                      <span>Cartão de Crédito</span>
+                      <span>Débito</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormPaymentMethod('vr')}
+                      className={`py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center space-x-1 cursor-pointer transition ${
+                        formPaymentMethod === 'vr'
+                          ? 'bg-stone-900 text-white shadow-sm'
+                          : 'bg-stone-100 text-stone-600 border border-stone-200 hover:text-stone-900'
+                      }`}
+                    >
+                      <span>VR</span>
                     </button>
                   </div>
-
-                  {formPaymentMethod === 'credit_card' && (
-                    <div className="mt-2 p-2.5 rounded-xl bg-purple-50 border border-purple-200 text-xs text-purple-900 space-y-1">
-                      <div className="flex items-center justify-between font-medium">
-                        <span>Fechamento: <strong>dia {creditCardSettings?.closingDay || 15}</strong></span>
-                        <span>Vencimento: <strong>dia {creditCardSettings?.dueDay || 25}</strong></span>
-                      </div>
-                      <div className="text-[11px] text-stone-600 pt-0.5">
-                        • Previsão de débito no saldo: <strong className="text-purple-700 font-mono">{calculateCreditCardDueDate(`${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(targetDay).padStart(2, '0')}`, creditCardSettings?.closingDay || 15, creditCardSettings?.dueDay || 25).split('-').reverse().join('/')}</strong>
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
 

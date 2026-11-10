@@ -7,7 +7,7 @@ import {
   CreditCard,
   QrCode,
   Wallet,
-  Banknote,
+  Utensils,
   Calendar,
   Sparkles,
   ArrowRight
@@ -16,20 +16,19 @@ import { formatCurrency } from '../utils/financialMath'
 import { DEFAULT_CATEGORIES } from '../utils/categories'
 
 const PRESETS = [
-  { label: 'Café / Lanche', icon: '☕', amount: '15.00', category: 'alimentacao', desc: 'Café / Lanche' },
-  { label: 'Almoço', icon: '🍽️', amount: '35.00', category: 'alimentacao', desc: 'Almoço' },
-  { label: 'Mercado', icon: '🛒', amount: '150.00', category: 'alimentacao', desc: 'Mercado' },
-  { label: 'Uber / Corrida', icon: '🚗', amount: '25.00', category: 'transporte', desc: 'Uber / Corrida' },
-  { label: 'Farmácia', icon: '💊', amount: '40.00', category: 'saude', desc: 'Farmácia / Remédios' },
-  { label: 'Fatura Cartão', icon: '💳', amount: '', category: 'outros', desc: 'Fatura do Cartão de Crédito', paymentMethod: 'Cartão Crédito' },
+  { label: 'Café / Lanche', icon: '☕', amount: '15.00', category: 'alimentacao', desc: 'Café / Lanche', paymentMethod: 'VR' },
+  { label: 'Almoço', icon: '🍽️', amount: '35.00', category: 'alimentacao', desc: 'Almoço', paymentMethod: 'VR' },
+  { label: 'Mercado', icon: '🛒', amount: '150.00', category: 'alimentacao', desc: 'Mercado', paymentMethod: 'VR' },
+  { label: 'Uber / Corrida', icon: '🚗', amount: '25.00', category: 'transporte', desc: 'Uber / Corrida', paymentMethod: 'Débito' },
+  { label: 'Farmácia', icon: '💊', amount: '40.00', category: 'saude', desc: 'Farmácia / Remédios', paymentMethod: 'Débito' },
+  { label: 'Fatura Cartão', icon: '💳', amount: '', category: 'outros', desc: 'Pagamento Fatura Cartão', paymentMethod: 'Débito' },
   { label: 'Pix Avulso', icon: '⚡', amount: '', category: 'outros', desc: 'Pix Avulso', paymentMethod: 'Pix' }
 ]
 
 const PAYMENT_METHODS = [
   { id: 'Pix', label: 'Pix', icon: QrCode },
-  { id: 'Cartão Crédito', label: 'Cartão Crédito', icon: CreditCard },
   { id: 'Débito', label: 'Débito', icon: Wallet },
-  { id: 'Dinheiro', label: 'Dinheiro', icon: Banknote }
+  { id: 'VR', label: 'VR (Refeição)', icon: Utensils }
 ]
 
 export function QuickExpenseFloatingButton({
@@ -131,7 +130,7 @@ export function QuickExpenseFloatingButton({
       category: category,
       type: type,
       source: paymentMethod,
-      paymentMethod: paymentMethod === 'Cartão Crédito' ? 'Cartão de Crédito' : 'À Vista / Pix'
+      paymentMethod: paymentMethod
     })
 
     setToastMessage(`${type === 'expense' ? 'Gasto' : 'Entrada'} de ${formatCurrency(numericAmount)} salvo!`)

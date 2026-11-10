@@ -25,7 +25,8 @@ export const DEFAULT_DATA = {
       amount: 145.20,
       type: 'expense',
       category: 'alimentacao',
-      source: 'Pix'
+      source: 'VR',
+      paymentMethod: 'VR'
     },
     {
       id: 'tx-2',
@@ -34,7 +35,8 @@ export const DEFAULT_DATA = {
       amount: 38.50,
       type: 'expense',
       category: 'saude',
-      source: 'Cartão de Crédito'
+      source: 'Débito',
+      paymentMethod: 'Débito'
     }
   ],
   recurringExpenses: [

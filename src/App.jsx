@@ -525,6 +525,7 @@ export function App() {
         merchantRules={data.merchantRules}
         onSaveMerchantRules={handleSaveMerchantRules}
         geminiApiKey={data.geminiApiKey}
+        creditCardSettings={data.creditCardSettings}
       />
 
       {/* Scenario Simulator Modal ('E Se?') */}

@@ -44,7 +44,8 @@ export function NubankImportModal({
   categories = CATEGORIES,
   merchantRules = {},
   onSaveMerchantRules,
-  geminiApiKey = ''
+  geminiApiKey = '',
+  creditCardSettings = { dueDay: 25, closingDay: 15 }
 }) {
   const [file, setFile] = useState(null)
   const [analysis, setAnalysis] = useState(null)
@@ -218,6 +219,50 @@ export function NubankImportModal({
     }))
 
     onImportTransactions(formattedTransactions)
+    onClose()
+  }
+
+  const isCardInvoice = reviewedItems.some(i => i.isCard) || (file && file.name.toLowerCase().includes('fatura'))
+  const invoiceTotal = reviewedItems
+    .filter(i => i.type === 'expense')
+    .reduce((sum, i) => sum + i.amount, 0)
+
+  const handleLaunchInvoicePayment = () => {
+    if (!reviewedItems.length) return
+
+    // 1. Collect merchant rules to save
+    const newRules = {}
+    for (const item of reviewedItems) {
+      if (item.rememberMerchant && item.category && item.category !== 'outros') {
+        const clean = cleanMerchantName(item.description)
+        if (clean.length >= 3) {
+          newRules[clean] = item.category
+        }
+      }
+    }
+    if (Object.keys(newRules).length > 0 && onSaveMerchantRules) {
+      onSaveMerchantRules(newRules)
+    }
+
+    // 2. Calculate due date
+    const today = new Date()
+    const dueDay = creditCardSettings?.dueDay || 25
+    const y = today.getFullYear()
+    const m = String(today.getMonth() + 1).padStart(2, '0')
+    const invoiceDueDate = `${y}-${m}-${String(dueDay).padStart(2, '0')}`
+
+    const invoicePaymentTx = {
+      id: `tx-card-invoice-${Date.now()}`,
+      date: invoiceDueDate,
+      description: `Pagamento Fatura ${analysis?.bankName || 'Cartão de Crédito'}`,
+      amount: parseFloat(invoiceTotal.toFixed(2)),
+      type: 'expense',
+      category: 'outros',
+      source: 'Débito',
+      paymentMethod: 'Débito'
+    }
+
+    onImportTransactions([invoicePaymentTx])
     onClose()
   }
 
@@ -431,6 +476,56 @@ export function NubankImportModal({
               {/* TAB 1: REVISÃO DE COMPRAS (TABELA INTERATIVA) */}
               {activeTab === 'review' && (
                 <div className="space-y-3">
+                  {/* Banner Diagnóstico da Fatura de Cartão */}
+                  {isCardInvoice && (
+                    <div className="p-4 rounded-2xl bg-purple-50/80 border border-purple-200 text-xs text-stone-800 space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div className="flex items-center space-x-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-purple-100 border border-purple-200 flex items-center justify-center text-purple-700 shrink-0">
+                            <CreditCard className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <span className="font-bold text-stone-900 block text-sm">Fatura de Cartão Detectada</span>
+                            <span className="text-[11px] text-stone-600">
+                              O cartão entra como um lançamento único no vencimento (dia {creditCardSettings?.dueDay || 25}). Use a auditoria abaixo para categorizar e analisar suas médias.
+                            </span>
+                          </div>
+                        </div>
+                        <div className="text-left sm:text-right shrink-0 bg-white/80 sm:bg-transparent p-2 sm:p-0 rounded-xl border sm:border-0 border-purple-200">
+                          <span className="text-[10px] uppercase font-bold text-stone-500 block">Total da Fatura</span>
+                          <span className="text-base font-bold font-mono text-purple-900">{formatCurrency(invoiceTotal)}</span>
+                        </div>
+                      </div>
+
+                      {/* Top Categorias da Fatura */}
+                      <div className="pt-2 border-t border-purple-200/60 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {Object.entries(
+                          reviewedItems
+                            .filter(i => i.type === 'expense')
+                            .reduce((acc, i) => {
+                              acc[i.category] = (acc[i.category] || 0) + i.amount
+                              return acc
+                            }, {})
+                        )
+                          .sort((a, b) => b[1] - a[1])
+                          .slice(0, 4)
+                          .map(([catId, sum]) => {
+                            const cat = categories.find(c => c.id === catId)
+                            const pct = invoiceTotal > 0 ? Math.round((sum / invoiceTotal) * 100) : 0
+                            return (
+                              <div key={catId} className="bg-white border border-purple-100 rounded-xl p-2 shadow-xs">
+                                <span className="text-[10px] text-stone-500 truncate block font-medium">{cat?.name || catId}</span>
+                                <div className="flex items-baseline justify-between mt-0.5">
+                                  <span className="font-mono font-bold text-stone-900 text-xs">{formatCurrency(sum)}</span>
+                                  <span className="text-[10px] text-purple-700 font-semibold">{pct}%</span>
+                                </div>
+                              </div>
+                            )
+                          })}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Filters & Search */}
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5">
                     <div className="flex items-center space-x-1.5 w-full sm:w-auto">
@@ -548,13 +643,24 @@ export function NubankImportModal({
                       💡 Estabelecimentos com <strong>"Lembrar"</strong> ativado são memorizados pelo app e categorizados automaticamente no futuro.
                     </p>
 
-                    <button
-                      onClick={handleConfirmImport}
-                      className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs flex items-center justify-center space-x-2 shadow-sm cursor-pointer transition active:scale-95"
-                    >
-                      <Check className="w-4 h-4" />
-                      <span>Confirmar e Lançar {reviewedItems.length} Compras na Planilha</span>
-                    </button>
+                    {isCardInvoice ? (
+                      <button
+                        onClick={handleLaunchInvoicePayment}
+                        className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs flex items-center justify-center space-x-2 shadow-sm cursor-pointer transition active:scale-95"
+                        title="Lança apenas 1 saída no dia do vencimento da fatura com o total consolidado"
+                      >
+                        <CreditCard className="w-4 h-4" />
+                        <span>💳 Lançar Pagamento da Fatura na Planilha ({formatCurrency(invoiceTotal)})</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleConfirmImport}
+                        className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs flex items-center justify-center space-x-2 shadow-sm cursor-pointer transition active:scale-95"
+                      >
+                        <Check className="w-4 h-4" />
+                        <span>Confirmar e Lançar {reviewedItems.length} Compras na Planilha</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               )}

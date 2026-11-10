@@ -400,13 +400,13 @@ export function SettingsTab({
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-stone-900 flex items-center space-x-2">
-                    <span>Ciclo de Fatura do Cartão de Crédito</span>
+                    <span>Fatura do Cartão de Crédito</span>
                     <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-purple-50 text-purple-800 border border-purple-200">
-                      Fechamento vs. Vencimento
+                      Vencimento & Pagamento
                     </span>
                   </h3>
                   <p className="text-xs text-stone-500 mt-0.5">
-                    Configure os dias do seu cartão para que os gastos sejam liquidados no dia exato em que o dinheiro sai do seu saldo.
+                    Configure os dias do seu cartão. O valor entra como um lançamento único no vencimento, sem poluir seu dia a dia.
                   </p>
                 </div>
               </div>
@@ -532,7 +532,7 @@ export function SettingsTab({
                     </div>
                   </div>
                   <p className="text-[11px] text-stone-500">
-                    Na <strong>Planilha Mensal</strong>, você pode alternar a visualização para "Data de Liquidação / Fatura" para enxergar o impacto exato no seu saldo bancário nesta data.
+                    O cartão entra na sua planilha como um pagamento consolidado no dia do vencimento da fatura, mantendo seu fluxo de caixa diário 100% focado em Débito, Pix e VR sem poluição.
                   </p>
                 </div>
               )
