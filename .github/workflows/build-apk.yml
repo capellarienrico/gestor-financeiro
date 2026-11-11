@@ -3,6 +3,8 @@ name: Build Android APK
 on:
   push:
     branches: [ "main" ]
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 permissions:
@@ -53,13 +55,23 @@ jobs:
           path: GestorFinanceiro.apk
           retention-days: 30
 
+      - name: Determine Release Tag
+        id: release_tag
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            VERSION="v$(node -p "require('./package.json').version")"
+            echo "tag=$VERSION" >> $GITHUB_OUTPUT
+          fi
+
       - name: Create or Update GitHub Release with APK
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.0
-          name: Gestor Financeiro v1.0.0
-          body: "### 📱 Gestor Financeiro - Android APK\n\nBaixe o arquivo **GestorFinanceiro.apk** abaixo e instale no seu celular Android.\n\n- Projeção de gastos e saldo cumulativo\n- Lançamentos diários e recorrentes\n- Simulador de teto diário\n- Importação de extrato Nubank"
+          tag_name: ${{ steps.release_tag.outputs.tag }}
+          name: Gestor Financeiro ${{ steps.release_tag.outputs.tag }}
+          body: "### 📱 Gestor Financeiro - Android APK\n\nBaixe o arquivo **GestorFinanceiro.apk** abaixo e instale no seu celular Android.\n\nConsulte o arquivo [RELEASES.md](RELEASES.md) para a lista de novidades desta versão."
           files: GestorFinanceiro.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

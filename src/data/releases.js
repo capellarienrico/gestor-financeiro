@@ -5,8 +5,8 @@ export const RELEASES = [
     date: '10/11/2026',
     isLatest: true,
     tagline: 'Lembretes diários no horário escolhido pelo usuário e relatórios executivos em PDF/CSV.',
-    apkDownloadUrl: 'https://github.com/capellarienrico/gestor-financeiro/releases',
-    githubReleaseUrl: 'https://github.com/capellarienrico/gestor-financeiro/releases',
+    apkDownloadUrl: 'https://github.com/capellarienrico/gestor-financeiro/releases/download/v1.2.0/GestorFinanceiro.apk',
+    githubReleaseUrl: 'https://github.com/capellarienrico/gestor-financeiro/releases/tag/v1.2.0',
     categories: [
       {
         type: 'mobile',
@@ -36,8 +36,8 @@ export const RELEASES = [
     date: '10/11/2026',
     isLatest: false,
     tagline: 'Nova identidade visual Clean Light e fluxo de caixa direto focado em Débito, Pix e VR.',
-    apkDownloadUrl: 'https://github.com/capellarienrico/gestor-financeiro/releases',
-    githubReleaseUrl: 'https://github.com/capellarienrico/gestor-financeiro/releases',
+    apkDownloadUrl: 'https://github.com/capellarienrico/gestor-financeiro/releases/download/v1.2.0/GestorFinanceiro.apk',
+    githubReleaseUrl: 'https://github.com/capellarienrico/gestor-financeiro/releases/tag/v1.2.0',
     categories: [
       {
         type: 'feature',
