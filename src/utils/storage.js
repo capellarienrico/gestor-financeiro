@@ -86,7 +86,13 @@ export const DEFAULT_DATA = {
     'drogasil': 'saude',
     'mercado livre': 'pessoal'
   },
-  geminiApiKey: ''
+  geminiApiKey: '',
+  notificationSettings: {
+    dailyReminderEnabled: true,
+    dailyReminderTime: '21:00',
+    invoiceReminderEnabled: true,
+    goalAlertEnabled: true
+  }
 }
 
 export function loadFinancialData() {
@@ -115,12 +121,18 @@ export function loadFinancialData() {
         ...(parsed.merchantRules || {})
       }
 
+      const notificationSettings = {
+        ...DEFAULT_DATA.notificationSettings,
+        ...(parsed.notificationSettings || {})
+      }
+
       return {
         ...DEFAULT_DATA,
         ...parsed,
         startingPoint,
         creditCardSettings,
         merchantRules,
+        notificationSettings,
         geminiApiKey: parsed.geminiApiKey || '',
         categories: parsed.categories && parsed.categories.length ? parsed.categories : DEFAULT_CATEGORIES,
         incomeCategories: parsed.incomeCategories && parsed.incomeCategories.length ? parsed.incomeCategories : DEFAULT_INCOME_CATEGORIES

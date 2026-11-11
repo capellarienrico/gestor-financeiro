@@ -4,6 +4,35 @@ Todas as versões do **Gestor Financeiro & Runway** são documentadas neste arqu
 
 ---
 
+## [v1.2.0] - 2026-11-10 — Notificações Locais & Relatórios Executivos
+
+### 🔔 Notificações Locais & Lembretes Diários (IMP-04)
+- **Lembrete Diário no Horário Escolhido:** Notificação push configurável no horário desejado (ex: 21:00) para registrar as despesas do dia e manter a disciplina sem esquecimentos.
+- **Aviso de Fatura de Cartão:** Notificação preventiva 2 dias antes do vencimento da fatura.
+- **Alerta de Meta Diária:** Aviso instantâneo caso os gastos diários ultrapassem a meta definida (R$ 65/dia).
+- **Botão de Demonstração & Teste:** Permite testar as notificações imediatamente nas Configurações.
+
+### 📄 Relatório Executivo Consolidado (IMP-03)
+- **Modal de Relatório Mensal:** Exibe visão executiva com KPIs de Entradas, Saídas, Resultado Líquido (Superávit/Déficit), Média Diária Real vs Meta e distribuição por categorias.
+- **Exportação em PDF (`window.print`):** Layout otimizado em A4 com suporte nativo a "Salvar como PDF" tanto no celular quanto no PC, sem dependências pesadas.
+- **Exportação CSV Direta:** Download de dados estruturados compatíveis com Excel e Google Planilhas.
+
+---
+
+## [v1.1.0] - 2026-11-10 — Redesign Clean Light & Simplificação de Caixa
+
+### 🎨 Redesign Clean Light Mode
+- Transição completa da antiga estética escura/neon para um design sóbrio, elegante e ergonômico (*warm stone*, *off-white*, grafite e acentos em laranja quente).
+- Integração do botão `+` de Gasto Rápido no centro da dock inferior de navegação sem sobreposições.
+
+### 💳 Fluxo de Caixa Direto (Débito, Pix e VR)
+- Eliminação do conceito confuso de "Data da Compra vs Data de Liquidação" na planilha.
+- O cartão de crédito passa a entrar como uma única saída no dia do vencimento da fatura.
+- O importador de fatura de cartão opera como painel analítico com médias e divisão de categorias.
+- Seletor de Horizonte de Projeção temporal no gráfico (1m, 3m, 6m, 1a, 3a).
+
+---
+
 ## [v1.0.0] - 2026-11-09 — Lançamento Oficial
 
 > **APK Android**: [Download GestorFinanceiro.apk (v1.0.0)](https://github.com/capellarienrico/gestor-financeiro/releases/download/v1.0.0/GestorFinanceiro.apk)  

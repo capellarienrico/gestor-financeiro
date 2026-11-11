@@ -16,13 +16,16 @@ import {
   ExternalLink,
   CreditCard,
   Info,
-  Sparkles
+  Sparkles,
+  Bell,
+  Clock
 } from 'lucide-react'
 import { importBackup } from '../utils/storage'
 import { DRIVE_FILENAME } from '../utils/googleDriveService'
 import { calculateCreditCardDueDate, DEFAULT_CARD_SETTINGS } from '../utils/creditCardCycle'
 import { testGeminiApiKey } from '../utils/geminiCategorizer'
 import { cleanMerchantName } from '../utils/categories'
+import { DEFAULT_NOTIFICATION_SETTINGS, triggerTestNotification } from '../utils/notifications'
 
 export function SettingsTab({
   categories,
@@ -45,6 +48,8 @@ export function SettingsTab({
   onUpdateMerchantRules,
   geminiApiKey = '',
   onUpdateGeminiApiKey,
+  notificationSettings = DEFAULT_NOTIFICATION_SETTINGS,
+  onUpdateNotificationSettings,
   onOpenReleasesModal
 }) {
   // Navigation state
@@ -56,6 +61,14 @@ export function SettingsTab({
   const [cardClosingDay, setCardClosingDay] = useState(creditCardSettings?.closingDay ?? 15)
   const [cardDueDay, setCardDueDay] = useState(creditCardSettings?.dueDay ?? 25)
   const [cardSavedFeedback, setCardSavedFeedback] = useState(false)
+
+  // Local notification settings state
+  const [dailyReminderEnabled, setDailyReminderEnabled] = useState(notificationSettings?.dailyReminderEnabled ?? true)
+  const [dailyReminderTime, setDailyReminderTime] = useState(notificationSettings?.dailyReminderTime ?? '21:00')
+  const [invoiceReminderEnabled, setInvoiceReminderEnabled] = useState(notificationSettings?.invoiceReminderEnabled ?? true)
+  const [goalAlertEnabled, setGoalAlertEnabled] = useState(notificationSettings?.goalAlertEnabled ?? true)
+  const [notificationSavedFeedback, setNotificationSavedFeedback] = useState(false)
+  const [isTestingNotification, setIsTestingNotification] = useState(false)
 
   // Local AI & Merchant state
   const [inputApiKey, setInputApiKey] = useState(geminiApiKey || '')
@@ -233,6 +246,17 @@ export function SettingsTab({
         >
           <CreditCard className="w-3.5 h-3.5" />
           <span>Cartão de Crédito</span>
+        </button>
+        <button
+          onClick={() => setActiveSubTab('notifications')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center space-x-1.5 whitespace-nowrap shrink-0 ${
+            activeSubTab === 'notifications'
+              ? 'bg-stone-900 text-white shadow-sm'
+              : 'bg-white text-stone-600 border border-stone-200 hover:bg-stone-50'
+          }`}
+        >
+          <Bell className="w-3.5 h-3.5 text-orange-600" />
+          <span>Notificações & Lembretes</span>
         </button>
         <button
           onClick={() => setActiveSubTab('ai')}
@@ -554,6 +578,178 @@ export function SettingsTab({
               >
                 <Check className="w-4 h-4" />
                 <span>Salvar Ciclo do Cartão</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SubTab: Notificações & Lembretes Locais */}
+      {activeSubTab === 'notifications' && (
+        <div className="space-y-6 animate-fade-in">
+          <div className="bg-white border border-stone-200 rounded-2xl p-6 space-y-6 shadow-sm">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-xl bg-orange-50 border border-orange-200 flex items-center justify-center text-orange-600 shrink-0">
+                  <Bell className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-stone-900 flex items-center space-x-2">
+                    <span>Lembretes & Notificações</span>
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-orange-50 text-orange-800 border border-orange-200">
+                      Capacitor / Android & Web
+                    </span>
+                  </h3>
+                  <p className="text-xs text-stone-500 mt-0.5">
+                    Receba avisos no seu celular para registrar os gastos do dia e não acumular pendências.
+                  </p>
+                </div>
+              </div>
+
+              {notificationSavedFeedback && (
+                <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-xl animate-fade-in">
+                  ✓ Configurações Salvas!
+                </span>
+              )}
+            </div>
+
+            {/* Config List */}
+            <div className="space-y-4 pt-2">
+              {/* 1. Lembrete Diário para Preencher o Dia */}
+              <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 rounded-lg bg-orange-100 text-orange-700 flex items-center justify-center shrink-0">
+                      <Clock className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-stone-900 block">
+                        Lembrete Diário para Preencher o Dia
+                      </span>
+                      <span className="text-[11px] text-stone-500">
+                        Avisa no seu celular no horário exato escolhido por você para registrar o dia
+                      </span>
+                    </div>
+                  </div>
+
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={dailyReminderEnabled}
+                      onChange={(e) => setDailyReminderEnabled(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-stone-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
+                  </label>
+                </div>
+
+                {dailyReminderEnabled && (
+                  <div className="pt-3 border-t border-stone-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs text-stone-600 font-medium">Horário Escolhido:</span>
+                      <input
+                        type="time"
+                        value={dailyReminderTime}
+                        onChange={(e) => setDailyReminderTime(e.target.value)}
+                        className="bg-white border border-stone-300 rounded-lg px-3 py-1.5 text-xs font-mono font-bold text-stone-900 focus:outline-none focus:ring-1 focus:ring-orange-500 cursor-pointer shadow-xs"
+                      />
+                    </div>
+                    <div className="text-[11px] text-stone-600 bg-white px-3 py-1.5 rounded-lg border border-stone-200 font-sans">
+                      💬 Mensagem: <em>"Hora do Fechamento Diário ☕ - Como foram seus gastos hoje?"</em>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 2. Aviso de Fatura do Cartão */}
+              <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
+                    <CreditCard className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-stone-900 block">
+                      Aviso de Vencimento da Fatura do Cartão
+                    </span>
+                    <span className="text-[11px] text-stone-500">
+                      Avisa 2 dias antes do vencimento (dia {cardDueDay}) para garantir o saldo em conta
+                    </span>
+                  </div>
+                </div>
+
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={invoiceReminderEnabled}
+                    onChange={(e) => setInvoiceReminderEnabled(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-stone-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-700"></div>
+                </label>
+              </div>
+
+              {/* 3. Alerta de Meta Diária */}
+              <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
+                    <Info className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-stone-900 block">
+                      Alerta de Meta Diária Ultrapassada
+                    </span>
+                    <span className="text-[11px] text-stone-500">
+                      Notifica caso a soma dos gastos no débito/pix de hoje ultrapasse sua meta (R$ {dailyBudgetGoal}/dia)
+                    </span>
+                  </div>
+                </div>
+
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={goalAlertEnabled}
+                    onChange={(e) => setGoalAlertEnabled(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-stone-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-600"></div>
+                </label>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-stone-100">
+              <button
+                type="button"
+                onClick={async () => {
+                  setIsTestingNotification(true)
+                  await triggerTestNotification({
+                    dailyReminderTime
+                  })
+                  setIsTestingNotification(false)
+                }}
+                disabled={isTestingNotification}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold flex items-center justify-center space-x-2 border border-stone-200 transition cursor-pointer shadow-xs disabled:opacity-50"
+              >
+                <Bell className="w-4 h-4 text-orange-600" />
+                <span>{isTestingNotification ? 'Disparando...' : '🔔 Testar Notificação Agora'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  onUpdateNotificationSettings?.({
+                    dailyReminderEnabled,
+                    dailyReminderTime,
+                    invoiceReminderEnabled,
+                    goalAlertEnabled
+                  })
+                  setNotificationSavedFeedback(true)
+                  setTimeout(() => setNotificationSavedFeedback(false), 3000)
+                }}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-semibold text-xs transition cursor-pointer shadow-sm flex items-center justify-center space-x-2"
+              >
+                <Check className="w-4 h-4" />
+                <span>Salvar Configurações de Notificação</span>
               </button>
             </div>
           </div>

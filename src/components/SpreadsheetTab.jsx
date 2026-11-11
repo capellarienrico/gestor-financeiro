@@ -10,11 +10,13 @@ import {
   ArrowUpRight,
   Download,
   FileSpreadsheet,
+  FileText,
   X,
   Sparkles,
   Flag,
   CreditCard
 } from 'lucide-react'
+import { MonthlyReportModal } from './MonthlyReportModal'
 import { formatCurrency } from '../utils/financialMath'
 import { getCategoryById } from '../utils/categories'
 import {
@@ -44,6 +46,7 @@ export function SpreadsheetTab({
 
   // Day Details / Breakdown Modal state
   const [selectedDayDetails, setSelectedDayDetails] = useState(null)
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false)
 
   // Add / Edit Transaction Form Modal state
   const [modalOpen, setModalOpen] = useState(false)
@@ -372,12 +375,22 @@ export function SpreadsheetTab({
         {/* Quick Actions */}
         <div className="flex items-center space-x-2">
           <button
+            onClick={() => setIsReportModalOpen(true)}
+            className="px-3 py-2 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-semibold flex items-center space-x-1.5 transition shadow-sm cursor-pointer"
+            title="Visualizar e exportar relatório mensal executivo em PDF"
+          >
+            <FileText className="w-4 h-4 text-stone-300" />
+            <span>Relatório PDF</span>
+          </button>
+
+          <button
             onClick={handleExportCSV}
             className="px-3 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold flex items-center space-x-1.5 transition border border-stone-200 cursor-pointer"
             title="Exportar como CSV compatível com Excel"
           >
-            <Download className="w-4 h-4" />
-            <span>Exportar Planilha (CSV)</span>
+            <Download className="w-4 h-4 text-stone-500" />
+            <span className="hidden sm:inline">Exportar Planilha</span>
+            <span>(CSV)</span>
           </button>
         </div>
       </div>
@@ -991,6 +1004,17 @@ export function SpreadsheetTab({
           </div>
         </div>
       )}
+
+      {/* MODAL DE RELATÓRIO EXECUTIVO (PDF + CSV) */}
+      <MonthlyReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        data={data}
+        selectedYear={selectedYear}
+        selectedMonth={selectedMonth}
+        categories={categories}
+        incomeCategories={incomeCategories}
+      />
     </div>
   )
 }

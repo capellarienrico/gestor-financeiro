@@ -27,6 +27,7 @@ import {
   findDriveFile
 } from './utils/googleDriveService'
 import { calculateFinancialForecast, formatCurrency } from './utils/financialMath'
+import { applyNotificationSettings } from './utils/notifications'
 
 export function App() {
   const [data, setData] = useState(() => loadFinancialData())
@@ -174,13 +175,31 @@ export function App() {
   }
 
   const handleUpdateCreditCardSettings = (newSettings) => {
-    setData(prev => ({
-      ...prev,
-      creditCardSettings: {
+    setData(prev => {
+      const updated = {
         ...prev.creditCardSettings,
         ...newSettings
       }
-    }))
+      applyNotificationSettings(prev.notificationSettings, updated?.dueDay)
+      return {
+        ...prev,
+        creditCardSettings: updated
+      }
+    })
+  }
+
+  const handleUpdateNotificationSettings = (newSettings) => {
+    setData(prev => {
+      const updated = {
+        ...prev.notificationSettings,
+        ...newSettings
+      }
+      applyNotificationSettings(updated, prev.creditCardSettings?.dueDay)
+      return {
+        ...prev,
+        notificationSettings: updated
+      }
+    })
   }
 
   // Categories updates
@@ -495,6 +514,8 @@ export function App() {
             onUpdateMerchantRules={handleUpdateMerchantRules}
             geminiApiKey={data.geminiApiKey}
             onUpdateGeminiApiKey={handleUpdateGeminiApiKey}
+            notificationSettings={data.notificationSettings}
+            onUpdateNotificationSettings={handleUpdateNotificationSettings}
             onOpenReleasesModal={() => setIsReleasesModalOpen(true)}
           />
         )}

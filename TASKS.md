@@ -25,6 +25,8 @@ Este arquivo coordena as tarefas executadas pelo **Antigravity** e orquestradas 
 - [x] Parser universal de extratos bancários (OFX / CSV) com memória persistente de estabelecimentos.
 - [x] Categorização inteligente via IA (Google Gemini 2.5 Flash batch) com BYOK.
 - [x] Modal e Histórico de Releases integrado diretamente no app.
+- [x] **[IMP-03] Exportação de Relatórios Avançados (PDF + CSV)**: Relatório executivo consolidado com KPIs mensais, distribuição de categorias e exportação A4 em PDF (`window.print`) e CSV.
+- [x] **[IMP-04] Lembretes & Notificações Locais (Capacitor Local Notifications)**: Lembrete diário configurável com horário personalizado para preencher o dia, aviso de vencimento de fatura e alerta de meta diária.
 
 ---
 
@@ -33,5 +35,3 @@ Este arquivo coordena as tarefas executadas pelo **Antigravity** e orquestradas 
 - [ ] **[FEAT-01] Alocação de Saldo (Liquidez Diária vs. Investido)**: Dividir o saldo atual entre caixa livre para o dia a dia e dinheiro guardado/investido que rende CDI, prevenindo gasto acidental da reserva.
 - [ ] **[IMP-01] Proxy Serverless Seguro para IA (Gemini Flash)**: Micro-serviço no Cloudflare Workers / Vercel para dispensar configuração manual de API key para novos usuários ([Ver doc](docs/improvements/01-gemini-ai-proxy-serverless.md)).
 - [ ] **[IMP-02] Deploy Web Contínuo (GitHub Pages)**: Hospedagem web pública automática via GitHub Actions para testar direto no navegador sem instalar APK.
-- [ ] **[IMP-03] Exportação de Relatórios Avançados**: Download de relatório mensal consolidado em PDF além do CSV.
-- [ ] **[IMP-04] Notificações Locais**: Lembrete no celular no dia do vencimento da fatura e limite de meta diária via Capacitor Local Notifications.

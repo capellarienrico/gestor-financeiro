@@ -1,9 +1,69 @@
 export const RELEASES = [
   {
+    version: '1.2.0',
+    name: 'Notificações Locais & Relatórios Executivos',
+    date: '10/11/2026',
+    isLatest: true,
+    tagline: 'Lembretes diários no horário escolhido pelo usuário e relatórios executivos em PDF/CSV.',
+    apkDownloadUrl: 'https://github.com/capellarienrico/gestor-financeiro/releases',
+    githubReleaseUrl: 'https://github.com/capellarienrico/gestor-financeiro/releases',
+    categories: [
+      {
+        type: 'mobile',
+        title: 'Notificações Locais & Lembretes Diários',
+        items: [
+          'Lembrete diário configurável no horário escolhido pelo usuário (ex: 21:00) para preencher os gastos do dia.',
+          'Aviso prévio 2 dias antes do vencimento da fatura do cartão de crédito.',
+          'Alerta imediato quando a meta diária (R$ 65/dia) for ultrapassada.',
+          'Botão para testar notificações push na hora nas configurações.'
+        ]
+      },
+      {
+        type: 'feature',
+        title: 'Relatório Executivo Consolidado',
+        items: [
+          'Relatório mensal executivo com KPIs de Entradas, Saídas, Resultado Líquido e Média Diária.',
+          'Distribuição de despesas por categorias com gráficos de barra percentuais.',
+          'Exportação direta em PDF formatada para papel A4 com suporte nativo de impressão.',
+          'Exportação de dados estruturados em CSV compatíveis com Excel e Sheets.'
+        ]
+      }
+    ]
+  },
+  {
+    version: '1.1.0',
+    name: 'Redesign Clean Light & Simplificação de Caixa',
+    date: '10/11/2026',
+    isLatest: false,
+    tagline: 'Nova identidade visual Clean Light e fluxo de caixa direto focado em Débito, Pix e VR.',
+    apkDownloadUrl: 'https://github.com/capellarienrico/gestor-financeiro/releases',
+    githubReleaseUrl: 'https://github.com/capellarienrico/gestor-financeiro/releases',
+    categories: [
+      {
+        type: 'feature',
+        title: 'Design Clean Light & Ergonomia',
+        items: [
+          'Transição completa do tema escuro para Clean Light (off-white, pedra suave, grafite e laranja quente).',
+          'Botão "+" de lançamento rápido integrado ao centro da barra de navegação sem sobreposições.',
+          'Seletor de horizonte temporal na projeção do saldo (1 mês, 3 meses, 6 meses, 1 ano, 3 anos).'
+        ]
+      },
+      {
+        type: 'card',
+        title: 'Fluxo de Caixa Simplificado',
+        items: [
+          'Foco direto em Débito, Pix e VR para compras do dia a dia.',
+          'Fatura de cartão de crédito tratada como um único pagamento no vencimento.',
+          'Importador de faturas operando como auditoria de categorias e cálculo de médias mensais.'
+        ]
+      }
+    ]
+  },
+  {
     version: '1.0.0',
     name: 'Lançamento Oficial: Gestor Financeiro & Runway',
     date: '09/11/2026',
-    isLatest: true,
+    isLatest: false,
     tagline: 'Primeira versão estável com projeção de runway, conciliação de cartão, IA e suporte nativo Android.',
     apkDownloadUrl: 'https://github.com/capellarienrico/gestor-financeiro/releases/download/v1.0.0/GestorFinanceiro.apk',
     githubReleaseUrl: 'https://github.com/capellarienrico/gestor-financeiro/releases/tag/v1.0.0',
