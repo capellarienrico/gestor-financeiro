@@ -4,6 +4,15 @@ Todas as versões do **Gestor Financeiro & Runway** são documentadas neste arqu
 
 ---
 
+## [v1.2.1] - 2026-11-11 — Ajuste de Área Segura (Safe Area) & Status Bar
+
+### 📱 Ergonomia Mobile & Status Bar
+- **Ajuste de Top Safe Area (`pt-safe`):** A barra superior do aplicativo agora respeita o espaçamento da barra de status do sistema e entalhes de câmera (notch / punch hole), impedindo sobreposição de ícones do sistema sobre o logo, versão e botão de saldo.
+- **Plugin Nativo `@capacitor/status-bar`:** Detecção em tempo de execução da altura exata da barra de status com injeção automática da variável CSS `--status-bar-height` e piso de segurança para dispositivos móveis.
+- **Estilo de Status Bar Claro:** Ícones escuros na barra de status para máxima visibilidade contra o cabeçalho Clean Light, além de meta tags `theme-color` e `apple-mobile-web-app-status-bar-style` atualizadas.
+
+---
+
 ## [v1.2.0] - 2026-11-10 — Notificações Locais & Relatórios Executivos
 
 ### 🔔 Notificações Locais & Lembretes Diários (IMP-04)

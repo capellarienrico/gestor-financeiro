@@ -28,6 +28,9 @@ import {
 } from './utils/googleDriveService'
 import { calculateFinancialForecast, formatCurrency } from './utils/financialMath'
 import { applyNotificationSettings } from './utils/notifications'
+import { StatusBar, Style } from '@capacitor/status-bar'
+import { Capacitor } from '@capacitor/core'
+import { RELEASES } from './data/releases'
 
 export function App() {
   const [data, setData] = useState(() => loadFinancialData())
@@ -44,6 +47,34 @@ export function App() {
   const [lastSyncTime, setLastSyncTime] = useState(() => localStorage.getItem('gdrive_last_sync'))
   const [isSyncing, setIsSyncing] = useState(false)
   const [syncError, setSyncError] = useState(null)
+
+  // Native Mobile Status Bar Initialization
+  useEffect(() => {
+    const initStatusBar = async () => {
+      if (!Capacitor.isNativePlatform()) return
+
+      // Add marker class to root for CSS safe-area floor on native devices
+      document.documentElement.classList.add('is-native-app')
+
+      try {
+        await StatusBar.setStyle({ style: Style.Light }) // Dark text/icons for light background
+        try {
+          await StatusBar.setBackgroundColor({ color: '#ffffff' })
+        } catch {
+          // Ignored on Android 15+ edge-to-edge
+        }
+
+        const info = await StatusBar.getInfo()
+        if (info && info.height > 0) {
+          document.documentElement.style.setProperty('--status-bar-height', `${info.height}px`)
+        }
+      } catch (err) {
+        console.warn('StatusBar init error:', err)
+      }
+    }
+
+    initStatusBar()
+  }, [])
 
   // Persist to localStorage whenever data changes
   useEffect(() => {
@@ -583,7 +614,7 @@ export function App() {
             className="hover:text-orange-600 font-mono font-semibold transition flex items-center space-x-1.5 cursor-pointer bg-white border border-stone-200 px-3 py-1 rounded-full text-[11px] shadow-xs"
           >
             <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
-            <span>Versão 1.0.0 • Ver Notas de Release</span>
+            <span>Versão {RELEASES[0]?.version || '1.2.0'} • Ver Notas de Release</span>
           </button>
           <span>•</span>
           <a

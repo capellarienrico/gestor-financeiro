@@ -1,9 +1,30 @@
 export const RELEASES = [
   {
+    version: '1.2.1',
+    name: 'Ajuste de Área Segura (Safe Area) & Status Bar',
+    date: '11/11/2026',
+    isLatest: true,
+    tagline: 'Correção de sobreposição da barra superior com a barra de status e entalhe do celular.',
+    apkDownloadUrl: 'https://github.com/capellarienrico/gestor-financeiro/releases/download/v1.2.1/GestorFinanceiro.apk',
+    githubReleaseUrl: 'https://github.com/capellarienrico/gestor-financeiro/releases/tag/v1.2.1',
+    categories: [
+      {
+        type: 'mobile',
+        title: 'Ergonomia & Interface Mobile',
+        items: [
+          'Espaçamento seguro automático no topo (safe-area-inset-top) para evitar sobreposição com relógio, bateria e notch do celular.',
+          'Integração com @capacitor/status-bar para cálculo exato de altura de hardware da barra de status.',
+          'Tema claro da status bar (ícones escuros sobre fundo claro) no Android e iOS.',
+          'Correção do theme-color e estilo de status bar para a estética Clean Light.'
+        ]
+      }
+    ]
+  },
+  {
     version: '1.2.0',
     name: 'Notificações Locais & Relatórios Executivos',
     date: '10/11/2026',
-    isLatest: true,
+    isLatest: false,
     tagline: 'Lembretes diários no horário escolhido pelo usuário e relatórios executivos em PDF/CSV.',
     apkDownloadUrl: 'https://github.com/capellarienrico/gestor-financeiro/releases/download/v1.2.0/GestorFinanceiro.apk',
     githubReleaseUrl: 'https://github.com/capellarienrico/gestor-financeiro/releases/tag/v1.2.0',

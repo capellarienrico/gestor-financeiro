@@ -13,6 +13,7 @@ import {
   Plus
 } from 'lucide-react'
 import { formatCurrency } from '../utils/financialMath'
+import { RELEASES } from '../data/releases'
 
 export function Navbar({
   currentBalance,
@@ -54,7 +55,7 @@ export function Navbar({
   return (
     <>
       {/* Top Header */}
-      <header className="border-b border-stone-200/90 bg-white/95 backdrop-blur-md sticky top-0 z-40 text-stone-900">
+      <header className="border-b border-stone-200/90 bg-white/95 backdrop-blur-md sticky top-0 z-40 text-stone-900 pt-safe">
         <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16 gap-2 sm:gap-4">
             {/* Logo & Versão */}
@@ -78,9 +79,9 @@ export function Navbar({
                         onOpenReleasesModal?.()
                       }}
                       className="px-1.5 py-0.2 text-[9px] sm:text-[10px] font-mono font-bold rounded-full bg-orange-50 text-orange-700 border border-orange-200 hover:bg-orange-100 transition cursor-pointer active:scale-95"
-                      title="Ver notas de lançamento da versão 1.0.0"
+                      title={`Ver notas de lançamento da versão ${RELEASES[0]?.version || '1.2.0'}`}
                     >
-                      v1.0.0
+                      v{RELEASES[0]?.version || '1.2.0'}
                     </button>
                   </div>
                 </div>

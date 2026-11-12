@@ -27,6 +27,7 @@ Este arquivo coordena as tarefas executadas pelo **Antigravity** e orquestradas 
 - [x] Modal e Histórico de Releases integrado diretamente no app.
 - [x] **[IMP-03] Exportação de Relatórios Avançados (PDF + CSV)**: Relatório executivo consolidado com KPIs mensais, distribuição de categorias e exportação A4 em PDF (`window.print`) e CSV.
 - [x] **[IMP-04] Lembretes & Notificações Locais (Capacitor Local Notifications)**: Lembrete diário configurável com horário personalizado para preencher o dia, aviso de vencimento de fatura e alerta de meta diária.
+- [x] **[FIX-01] Ajuste de Safe Area & Status Bar Overlap**: Espaçamento dinâmico no topo do header (`pt-safe`) com `@capacitor/status-bar`, evitando sobreposição da barra de status do celular e câmera punch hole/notch sobre o saldo e logo.
 
 ---
 
