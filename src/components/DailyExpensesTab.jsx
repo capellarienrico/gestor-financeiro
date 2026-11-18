@@ -114,7 +114,7 @@ export function DailyExpensesTab({
           </div>
           <button
             onClick={handleOpenAdd}
-            className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm transition flex items-center space-x-2 shadow-lg shadow-emerald-600/20 cursor-pointer"
+            className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm transition flex items-center space-x-2 shadow-sm cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Novo Lançamento</span>
@@ -244,7 +244,7 @@ export function DailyExpensesTab({
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold cursor-pointer shadow-lg shadow-emerald-600/20"
+              className="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold cursor-pointer shadow-sm"
             >
               {editingId ? 'Salvar Alterações' : 'Salvar Lançamento'}
             </button>
@@ -296,7 +296,7 @@ export function DailyExpensesTab({
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-800 bg-slate-950/40 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+              <tr className="border-b border-slate-800 bg-slate-950/40 text-[11px] font-medium text-slate-400">
                 <th className="py-3 px-4">Data</th>
                 <th className="py-3 px-4">Descrição</th>
                 <th className="py-3 px-4">Categoria</th>

@@ -71,7 +71,7 @@ export function DailyForecastAssistant({
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <span className="text-sm text-stone-600 font-medium">Gasto Diário Variável Estimado (Y):</span>
-              <div className="text-2xl font-black font-mono text-orange-600 flex items-center space-x-1">
+              <div className="text-2xl font-bold font-mono text-orange-600 flex items-center space-x-1">
                 <span>{formatCurrency(sliderValue)}</span>
                 <span className="text-xs text-stone-400 font-normal">/dia</span>
               </div>
@@ -95,7 +95,7 @@ export function DailyForecastAssistant({
 
           {/* Resultado da Projeção para esse valor Y */}
           <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 space-y-3">
-            <h4 className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+            <h4 className="text-xs font-medium text-stone-600">
               Se você gastar {formatCurrency(sliderValue)}/dia até o fim de {monthName}:
             </h4>
             
@@ -161,7 +161,7 @@ export function DailyForecastAssistant({
             {/* Resultado do Cálculo */}
             <div className="p-4 rounded-xl bg-orange-50/70 border border-orange-200 space-y-2">
               <span className="text-xs text-orange-800 font-semibold">Seu Teto de Gastos Diário Permitido:</span>
-              <div className="text-3xl font-extrabold font-mono text-orange-600">
+              <div className="text-3xl font-bold font-mono text-orange-600">
                 {formatCurrency(calculatedAllowedDaily)} <span className="text-xs text-orange-700 font-normal">/dia</span>
               </div>
               <p className="text-xs text-stone-600">

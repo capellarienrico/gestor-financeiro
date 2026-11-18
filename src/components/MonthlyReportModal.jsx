@@ -180,7 +180,7 @@ export function MonthlyReportModal({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-stone-200 gap-4">
             <div>
               <div className="flex items-center space-x-2 mb-1">
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-800 uppercase tracking-wider">
+                <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-orange-100 text-orange-800">
                   Relatório Executivo
                 </span>
                 <span className="text-xs text-stone-400">&bull;</span>
@@ -240,7 +240,7 @@ export function MonthlyReportModal({
                 {netResult >= 0 ? `+${formatCurrency(netResult)}` : formatCurrency(netResult)}
               </div>
               <span className="text-[10px] text-stone-400 block mt-1">
-                {netResult >= 0 ? '✓ Superávit no mês' : '⚠ Déficit no mês'}
+                {netResult >= 0 ? 'Superávit no mês' : 'Déficit no mês'}
               </span>
             </div>
 
@@ -344,7 +344,7 @@ export function MonthlyReportModal({
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-stone-200 text-stone-500 text-[10px] uppercase font-bold tracking-wider">
+                    <tr className="border-b border-stone-200 text-stone-500 text-[10px] font-medium">
                       <th className="py-2 px-2">Data</th>
                       <th className="py-2 px-2">Descrição</th>
                       <th className="py-2 px-2">Categoria</th>

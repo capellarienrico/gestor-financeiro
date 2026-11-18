@@ -64,12 +64,12 @@ export function Navbar({
                 className="flex items-center space-x-2 cursor-pointer select-none active:scale-95 transition-transform"
                 onClick={() => setActiveTab('spreadsheet')}
               >
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-orange-600 flex items-center justify-center text-white font-bold shadow-md shadow-orange-600/25 shrink-0">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-orange-600 flex items-center justify-center text-white font-bold shadow-sm shrink-0">
                   <Wallet className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                 </div>
                 <div>
                   <div className="flex items-center space-x-1.5">
-                    <span className="font-extrabold text-sm sm:text-base text-stone-900 tracking-tight">
+                    <span className="font-bold text-sm sm:text-base text-stone-900 tracking-tight">
                       Finanças
                     </span>
                     <button
@@ -117,10 +117,9 @@ export function Navbar({
                   title="Toque para editar seu saldo total"
                 >
                   <span className="text-[10px] sm:text-xs text-stone-500 font-medium">Saldo:</span>
-                  <span className="text-stone-900 font-extrabold font-mono text-xs sm:text-sm group-hover:text-orange-600 transition-colors">
+                  <span className="text-stone-900 font-bold font-mono text-xs sm:text-sm group-hover:text-orange-600 transition-colors">
                     {formatCurrency(currentBalance)}
                   </span>
-                  <span className="text-[9px] text-stone-400 sm:inline hidden">✎</span>
                 </button>
               )}
             </div>
@@ -131,7 +130,7 @@ export function Navbar({
               <button
                 type="button"
                 onClick={onOpenQuickExpense}
-                className="hidden md:flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-semibold text-xs transition shadow-sm shadow-orange-600/20 active:scale-95 cursor-pointer"
+                className="hidden md:flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-semibold text-xs transition shadow-sm cursor-pointer"
                 title="Lançamento Rápido (Atalho: Tecla N)"
               >
                 <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -238,7 +237,7 @@ export function Navbar({
             <button
               type="button"
               onClick={onOpenQuickExpense}
-              className="w-13 h-13 -mt-6 rounded-full bg-orange-600 hover:bg-orange-500 text-white shadow-xl shadow-orange-600/35 border-4 border-[#f8f7f4] flex items-center justify-center cursor-pointer active:scale-90 transition-transform"
+              className="w-13 h-13 -mt-6 rounded-full bg-orange-600 hover:bg-orange-500 text-white shadow-md border-4 border-[#f8f7f4] flex items-center justify-center cursor-pointer active:scale-95 transition-transform"
               title="Lançamento Rápido em 1 Toque"
             >
               <Plus className="w-6 h-6 text-white stroke-[2.5]" />
